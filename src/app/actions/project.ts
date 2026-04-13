@@ -22,7 +22,7 @@ export async function createProject(formData: { name: string; description?: stri
         ownerId: session.user.id,
         name,
         description,
-        members: [session.user.id],
+        members: [{ userId: session.user.id, role: "member" }],
     });
 
     revalidatePath("/create-project");
@@ -42,7 +42,7 @@ export async function getProjects() {
     const projects = await Project.find({
         $or: [
             { ownerId: session.user.id },
-            { members: session.user.id }
+            { "members.userId": session.user.id }
         ]
     }).sort({ createdAt: -1 });
 
@@ -65,11 +65,11 @@ export async function joinProject(joinToken: string, projectId: string) {
         throw new Error("Project not found or invalid join code.");
     }
 
-    if (project.ownerId === session.user.id || project.members.includes(session.user.id)) {
+    if (project.ownerId === session.user.id || project.members.some(m => m.userId === session.user.id)) {
         throw new Error("You are already a member of this project.");
     }
 
-    project.members.push(session.user.id);
+    project.members.push({ userId: session.user.id, role: "member" });
     await project.save();
 
     revalidatePath("/dashboard");

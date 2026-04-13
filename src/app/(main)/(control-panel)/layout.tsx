@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/shared/sidebar";
 import { ControlNavbar } from "@/components/shared/control-navbar";
 import { authClient } from "@/lib/auth-client";
 import { useRouter, usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const ControlPanelLayout = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
@@ -43,8 +44,13 @@ const ControlPanelLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
                 <ControlNavbar onMenuClick={() => setIsSidebarOpen(true)} />
 
-                <main className="flex-1 overflow-y-auto overflow-x-hidden">
-                    <div className="relative px-6 py-8 min-h-full">
+                <main className="flex-1 overflow-hidden flex flex-col">
+                    <div className={cn(
+                        "relative flex-1",
+                        pathname.endsWith("/workspace")
+                            ? "overflow-hidden"
+                            : "overflow-y-auto px-6 py-8"
+                    )}>
                         {children}
                     </div>
                 </main>

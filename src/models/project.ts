@@ -5,7 +5,7 @@ export interface IProject extends Document {
     name: string;
     description?: string;
     joinToken: string;
-    members: string[]; // User IDs
+    members: { userId: string; role: "manager" | "member" }[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -21,7 +21,7 @@ const projectSchema = new Schema<IProject>(
             unique: true,
             default: () => Math.floor(100000 + Math.random() * 900000).toString(),
         },
-        members: { type: [String], default: [] },
+        members: { type: [{ userId: String, role: String }], default: [] },
     },
     { timestamps: true }
 );

@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
         title: "Project",
         icon: HiOutlineCube,
         items: [
-            { title: "Workspace", href: "/project", icon: HiOutlineBriefcase },
+            { title: "Workspace", href: "/project/workspace", icon: HiOutlineBriefcase },
             { title: "Settings", href: "/project/settings", icon: HiOutlineCog },
             { title: "Invite", href: "/project/invite", icon: GrSend },
             {
