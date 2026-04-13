@@ -58,6 +58,11 @@ const navItems: NavItem[] = [
                 href: "/project/join",
                 icon: HiOutlinePlusCircle,
             },
+            {
+                title: "Create Project",
+                href: "/project/create",
+                icon: HiOutlinePlusCircle,
+            }
         ],
     },
     {

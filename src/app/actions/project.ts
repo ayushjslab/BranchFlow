@@ -49,7 +49,7 @@ export async function getProjects() {
     return JSON.parse(JSON.stringify(projects));
 }
 
-export async function joinProject(joinToken: string) {
+export async function joinProject(joinToken: string, projectId: string) {
     await connectToDatabase();
     const session = await auth.api.getSession({
         headers: await headers(),
@@ -59,10 +59,10 @@ export async function joinProject(joinToken: string) {
         throw new Error("Unauthorized");
     }
 
-    const project = await Project.findOne({ joinToken });
+    const project = await Project.findOne({ _id: projectId, joinToken });
 
     if (!project) {
-        throw new Error("Project not found. Please check the code.");
+        throw new Error("Project not found or invalid join code.");
     }
 
     if (project.ownerId === session.user.id || project.members.includes(session.user.id)) {

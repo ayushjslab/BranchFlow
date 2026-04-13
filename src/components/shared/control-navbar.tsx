@@ -84,23 +84,38 @@ export const ControlNavbar = ({ onMenuClick }: ControlNavbarProps) => {
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator className="bg-primary/5 mx-2" />
                             <div className="max-h-[300px] overflow-y-auto custom-scrollbar my-1">
-                                {projects?.map((project: any) => (
-                                    <DropdownMenuItem
-                                        key={project._id}
-                                        onClick={() => setSelectedProject(project)}
-                                        className={cn(
-                                            "rounded-xl px-3 py-3 cursor-pointer flex items-center justify-between transition-all mt-1",
-                                            selectedProject?._id === project._id ? "bg-primary/10 text-primary font-bold" : "hover:bg-primary/5"
-                                        )}
-                                    >
-                                        <span className="truncate">{project.name}</span>
-                                        <span className="text-[10px] font-mono opacity-50">#{project.joinToken}</span>
-                                    </DropdownMenuItem>
-                                ))}
+                                {projects?.map((project: any) => {
+                                    const isOwner = project.ownerId === session?.user?.id;
+                                    return (
+                                        <DropdownMenuItem
+                                            key={project._id}
+                                            onClick={() => setSelectedProject(project)}
+                                            className={cn(
+                                                "rounded-xl px-3 py-3 cursor-pointer flex items-center justify-between transition-all mt-1",
+                                                selectedProject?._id === project._id ? "bg-primary/10 text-primary font-bold" : "hover:bg-primary/5"
+                                            )}
+                                        >
+                                            <div className="flex flex-col gap-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="truncate">{project.name}</span>
+                                                    <span className={cn(
+                                                        "text-[8px] font-black uppercase px-2 py-0.5 rounded-full ring-1",
+                                                        isOwner
+                                                            ? "bg-yellow-500/10 text-yellow-500 ring-yellow-500/20"
+                                                            : "bg-green-500/10 text-green-500 ring-green-500/20"
+                                                    )}>
+                                                        {isOwner ? "Owner" : "Member"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-mono opacity-50 ml-2">#{project.joinToken}</span>
+                                        </DropdownMenuItem>
+                                    );
+                                })}
                             </div>
                             <DropdownMenuSeparator className="bg-primary/5 mx-2" />
                             <DropdownMenuItem
-                                onClick={() => router.push("/create-project")}
+                                onClick={() => router.push("/project/create")}
                                 className="mt-1 rounded-xl px-3 py-3 cursor-pointer bg-primary text-primary-foreground font-black shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:translate-y-[-2px] transition-transform"
                             >
                                 <HiOutlinePlus />

@@ -37,7 +37,7 @@ export default function InvitePage() {
 
     const isOwner = session?.user?.id === selectedProject.ownerId;
     const inviteLink = typeof window !== "undefined"
-        ? `${window.location.origin}/join-project`
+        ? `${window.location.origin}/${selectedProject._id}/join-project`
         : "";
 
     const copyToClipboard = async (text: string, type: "code" | "link") => {

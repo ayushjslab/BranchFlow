@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/shared/sidebar";
 import { ControlNavbar } from "@/components/shared/control-navbar";
 import { authClient } from "@/lib/auth-client";
@@ -13,6 +13,12 @@ const ControlPanelLayout = ({ children }: { children: React.ReactNode }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+    useEffect(() => {
+        if (!isPending && !session) {
+            router.push(`/signin?callbackURL=${encodeURIComponent(pathname)}`);
+        }
+    }, [session, isPending, router, pathname]);
+
     if (isPending) {
         return (
             <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -22,7 +28,6 @@ const ControlPanelLayout = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (!session) {
-        router.push(`/signin?callbackURL=${encodeURIComponent(pathname)}`);
         return null;
     }
 
