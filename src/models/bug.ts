@@ -1,6 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
-const taskSchema = new Schema({
+const bugSchema = new Schema({
     name: {
         type: String,
         required: true
@@ -11,7 +11,7 @@ const taskSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["pending", "in-progress", "completed"],
+        enum: ["pending", "in-progress", "completed", "won't fix", "duplicate"],
         default: "pending"
     },
     priority: {
@@ -24,9 +24,13 @@ const taskSchema = new Schema({
         ref: "Project",
         required: true
     },
-    assignee: {
+    reportedBy: {
         type: String, // User ID
         required: true
+    },
+    fixedBy: {
+        type: String, // User ID (Assignee)
+        default: null
     },
     dueDate: {
         type: Date,
@@ -36,13 +40,9 @@ const taskSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "Explorer",
         required: true
-    },
-    createdBy: {
-        type: String, // User ID
-        required: true
     }
 }, { timestamps: true });
 
-const Task = models.Task || model("Task", taskSchema);
+const Bug = models.Bug || model("Bug", bugSchema);
 
-export default Task;
+export default Bug;

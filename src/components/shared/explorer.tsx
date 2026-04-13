@@ -19,9 +19,13 @@ import {
     Trash,
     Loader2,
     ClipboardCheck,
-    RefreshCw
+    RefreshCw,
+    Bug as BugIcon,
+    Sparkles
 } from "lucide-react";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { CreateBugDialog } from "./create-bug-dialog";
+import { CreateFeatureDialog } from "./create-feature-dialog";
 import { useProjectStore } from "@/store/useProjectStore";
 
 import {
@@ -51,6 +55,8 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
     const [isAdding, setIsAdding] = useState<"blob" | "folder" | null>(null);
     const [newItemName, setNewItemName] = useState("");
     const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+    const [isBugDialogOpen, setIsBugDialogOpen] = useState(false);
+    const [isFeatureDialogOpen, setIsFeatureDialogOpen] = useState(false);
     const { setSelectedBlob, selectedBlob } = useProjectStore();
 
     const queryClient = useQueryClient();
@@ -178,13 +184,29 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
 
                         <DropdownMenuContent align="end">
                             {item.type === "blob" && (
-                                <DropdownMenuItem
-                                    onClick={() => setIsTaskDialogOpen(true)}
-                                    className="text-primary"
-                                >
-                                    <ClipboardCheck className="w-4 h-4 mr-2" />
-                                    Create Task
-                                </DropdownMenuItem>
+                                <>
+                                    <DropdownMenuItem
+                                        onClick={() => setIsTaskDialogOpen(true)}
+                                        className="text-primary focus:text-primary focus:bg-primary/10"
+                                    >
+                                        <ClipboardCheck className="w-4 h-4 mr-2" />
+                                        Create Task
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => setIsBugDialogOpen(true)}
+                                        className="text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
+                                    >
+                                        <BugIcon className="w-4 h-4 mr-2" />
+                                        Report Bug
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => setIsFeatureDialogOpen(true)}
+                                        className="text-violet-500 focus:text-violet-500 focus:bg-violet-500/10"
+                                    >
+                                        <Sparkles className="w-4 h-4 mr-2" />
+                                        Propose Feature
+                                    </DropdownMenuItem>
+                                </>
                             )}
                             <DropdownMenuItem
                                 className="text-destructive"
@@ -199,13 +221,29 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
             </div>
 
             {item.type === "blob" && (
-                <CreateTaskDialog
-                    isOpen={isTaskDialogOpen}
-                    onClose={() => setIsTaskDialogOpen(false)}
-                    projectId={projectId}
-                    blobId={item._id}
-                    blobName={item.name}
-                />
+                <>
+                    <CreateTaskDialog
+                        isOpen={isTaskDialogOpen}
+                        onClose={() => setIsTaskDialogOpen(false)}
+                        projectId={projectId}
+                        blobId={item._id}
+                        blobName={item.name}
+                    />
+                    <CreateBugDialog
+                        isOpen={isBugDialogOpen}
+                        onClose={() => setIsBugDialogOpen(false)}
+                        projectId={projectId}
+                        blobId={item._id}
+                        blobName={item.name}
+                    />
+                    <CreateFeatureDialog
+                        isOpen={isFeatureDialogOpen}
+                        onClose={() => setIsFeatureDialogOpen(false)}
+                        projectId={projectId}
+                        blobId={item._id}
+                        blobName={item.name}
+                    />
+                </>
             )}
 
             {/* ===== Children ===== */}

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTask, getProjectMembers } from "@/app/actions/task";
+import { createBug, getProjectMembers } from "@/app/actions/task";
 import {
     Dialog,
     DialogContent,
@@ -22,10 +22,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, User as UserIcon, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { Loader2, Bug, AlertCircle, AlertTriangle, Info, User as UserIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
-interface CreateTaskDialogProps {
+interface CreateBugDialogProps {
     isOpen: boolean;
     onClose: () => void;
     projectId: string;
@@ -33,18 +34,19 @@ interface CreateTaskDialogProps {
     blobName: string;
 }
 
-export const CreateTaskDialog = ({
+export const CreateBugDialog = ({
     isOpen,
     onClose,
     projectId,
     blobId,
     blobName
-}: CreateTaskDialogProps) => {
+}: CreateBugDialogProps) => {
     const queryClient = useQueryClient();
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-    const [assignee, setAssignee] = useState("");
+    const [priority, setPriority] = useState<"low" | "medium" | "high">("high");
+    const [reportedBy, setReportedBy] = useState("");
+    const [fixedBy, setFixedBy] = useState("");
     const [dueDate, setDueDate] = useState("");
 
     const { data: members, isLoading: isLoadingMembers } = useQuery({
@@ -54,15 +56,16 @@ export const CreateTaskDialog = ({
     });
 
     const mutation = useMutation({
-        mutationFn: createTask,
+        mutationFn: createBug,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["tasks", projectId, blobId] });
-            toast.success("Task created successfully");
+            toast.success("Bug report initiated");
             onClose();
             setName("");
             setDescription("");
-            setPriority("medium");
-            setAssignee("");
+            setPriority("high");
+            setReportedBy("");
+            setFixedBy("");
             setDueDate("");
         },
         onError: (error: any) => {
@@ -72,8 +75,8 @@ export const CreateTaskDialog = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !description || !assignee || !dueDate) {
-            toast.error("Please fill in all required fields");
+        if (!name || !description || !reportedBy || !dueDate) {
+            toast.error("Please fill in all required fields (Name, Description, Reporter, Deadline)");
             return;
         }
 
@@ -81,27 +84,27 @@ export const CreateTaskDialog = ({
             name,
             description,
             priority,
-            assignee,
+            reportedBy,
+            fixedBy: fixedBy || undefined,
             dueDate: new Date(dueDate),
             projectId,
             blobId,
-            status: "pending",
-            createdBy: "", // Server will handle this
+            status: "pending"
         });
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px] bg-card/60 backdrop-blur-3xl border-primary/10">
+            <DialogContent className="sm:max-w-[425px] bg-card/60 backdrop-blur-3xl border-rose-500/10">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
-                            <ShieldCheck className="w-5 h-5" />
+                        <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 shadow-lg shadow-rose-500/5">
+                            <Bug className="w-5 h-5 animate-pulse" />
                         </div>
                         <div className="space-y-0.5 text-left">
-                            <DialogTitle className="text-xl font-black tracking-tight">Create Task</DialogTitle>
+                            <DialogTitle className="text-xl font-black tracking-tight text-rose-500">Report Defect</DialogTitle>
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest opacity-60">
-                                Assigned to <span className="text-primary font-black underline underline-offset-4">{blobName}</span>
+                                Trace issue in <span className="text-rose-500 font-black underline underline-offset-4">{blobName}</span>
                             </p>
                         </div>
                     </div>
@@ -109,39 +112,39 @@ export const CreateTaskDialog = ({
 
                 <form onSubmit={handleSubmit} className="space-y-5 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name" className="text-xs font-black uppercase tracking-[0.15em] opacity-40 ml-1">Task Name</Label>
+                        <Label htmlFor="name" className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Defect ID/Title</Label>
                         <Input
                             id="name"
-                            placeholder="Identify the objective..."
+                            placeholder="Brief summary of the glitch..."
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="bg-primary/5 border-primary/10 rounded-xl h-11 focus:ring-primary/20 transition-all font-medium"
+                            className="bg-rose-500/5 border-rose-500/10 rounded-xl h-11 focus:ring-rose-500/20 transition-all font-medium"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="description" className="text-xs font-black uppercase tracking-[0.15em] opacity-40 ml-1">Execution Details</Label>
+                        <Label htmlFor="description" className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Anomalous Behavior</Label>
                         <Textarea
                             id="description"
-                            placeholder="Provide comprehensive details about this task..."
+                            placeholder="Detail the steps to reproduce or behavior observed..."
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="bg-primary/5 border-primary/10 rounded-xl min-h-[120px] focus:ring-primary/20 transition-all font-medium resize-none"
+                            className="bg-rose-500/5 border-rose-500/10 rounded-xl min-h-[100px] focus:ring-rose-500/20 transition-all font-medium resize-none text-sm"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label className="text-xs font-black uppercase tracking-[0.15em] opacity-40 ml-1">Priority</Label>
+                        <div className="space-y-2 col-span-2">
+                            <Label className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Severity / Priority</Label>
                             <Select value={priority} onValueChange={(v: any) => setPriority(v)}>
-                                <SelectTrigger className="bg-primary/5 border-primary/10 rounded-xl h-11 hover:bg-primary/10 transition-all">
-                                    <SelectValue placeholder="Select" />
+                                <SelectTrigger className="bg-rose-500/5 border-rose-500/10 rounded-xl h-11 hover:bg-rose-500/10 transition-all">
+                                    <SelectValue placeholder="Criticality" />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-2xl border-primary/10">
+                                <SelectContent className="rounded-2xl border-rose-500/10">
                                     <SelectItem value="low" className="text-emerald-500 focus:text-emerald-500 focus:bg-emerald-500/10 transition-colors">
                                         <div className="flex items-center gap-2 font-bold uppercase text-[10px]">
                                             <Info className="w-3.5 h-3.5" />
-                                            <span>Routine</span>
+                                            <span>Minor</span>
                                         </div>
                                     </SelectItem>
                                     <SelectItem value="medium" className="text-amber-500 focus:text-amber-500 focus:bg-amber-500/10 transition-colors">
@@ -161,18 +164,45 @@ export const CreateTaskDialog = ({
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-xs font-black uppercase tracking-[0.15em] opacity-40 ml-1">Assignee</Label>
-                            <Select value={assignee} onValueChange={setAssignee} disabled={isLoadingMembers}>
-                                <SelectTrigger className="bg-primary/5 border-primary/10 rounded-xl h-11 hover:bg-primary/10 transition-all">
-                                    <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Operator"} />
+                            <Label className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Reported By</Label>
+                            <Select value={reportedBy} onValueChange={setReportedBy} disabled={isLoadingMembers}>
+                                <SelectTrigger className="bg-rose-500/5 border-rose-500/10 rounded-xl h-11 hover:bg-rose-500/10 transition-all">
+                                    <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Source"} />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-2xl border-primary/10">
+                                <SelectContent className="rounded-2xl border-rose-500/10">
                                     {members?.map((member: any) => (
                                         <SelectItem key={member.userId || member.id || member._id} value={member.userId || member.id || member._id}>
                                             <div className="flex items-center gap-2 py-0.5">
-                                                <Avatar className="h-6 w-6 border border-primary/10">
+                                                <Avatar className="h-6 w-6 border border-rose-500/10">
                                                     <AvatarImage src={member.image} />
-                                                    <AvatarFallback className="text-[10px] bg-primary/10 font-black">
+                                                    <AvatarFallback className="text-[10px] bg-rose-500/10 font-black">
+                                                        {member.name?.slice(0, 2).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col text-left">
+                                                    <span className="text-xs font-black tracking-tight">{member.name}</span>
+                                                    <span className="text-[9px] opacity-40 font-bold uppercase tracking-widest">{member.role}</span>
+                                                </div>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Fixer (Optional)</Label>
+                            <Select value={fixedBy} onValueChange={setFixedBy} disabled={isLoadingMembers}>
+                                <SelectTrigger className="bg-rose-500/5 border-rose-500/10 rounded-xl h-11 hover:bg-rose-500/10 transition-all">
+                                    <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Assigned"} />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-rose-500/10">
+                                    {members?.map((member: any) => (
+                                        <SelectItem key={member.userId || member.id || member._id} value={member.userId || member.id || member._id}>
+                                            <div className="flex items-center gap-2 py-0.5">
+                                                <Avatar className="h-6 w-6 border border-rose-500/10">
+                                                    <AvatarImage src={member.image} />
+                                                    <AvatarFallback className="text-[10px] bg-rose-500/10 font-black">
                                                         {member.name?.slice(0, 2).toUpperCase()}
                                                     </AvatarFallback>
                                                 </Avatar>
@@ -189,13 +219,13 @@ export const CreateTaskDialog = ({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="dueDate" className="text-xs font-black uppercase tracking-[0.15em] opacity-40 ml-1">Deadline</Label>
+                        <Label htmlFor="dueDate" className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Target Resolution</Label>
                         <Input
                             id="dueDate"
                             type="date"
                             value={dueDate}
                             onChange={(e) => setDueDate(e.target.value)}
-                            className="bg-primary/5 border-primary/10 rounded-xl h-11 transition-all font-black uppercase text-[10px] tracking-widest cursor-pointer scheme-dark"
+                            className="bg-rose-500/5 border-rose-500/10 rounded-xl h-11 transition-all font-black uppercase text-[10px] tracking-widest cursor-pointer scheme-dark"
                         />
                     </div>
 
@@ -211,15 +241,15 @@ export const CreateTaskDialog = ({
                         <Button
                             type="submit"
                             disabled={mutation.isPending}
-                            className="rounded-xl px-10 h-11 font-black uppercase text-[11px] tracking-widest bg-primary text-primary-foreground shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                            className="rounded-xl px-10 h-11 font-black uppercase text-[11px] tracking-widest bg-rose-600 text-white shadow-2xl shadow-rose-500/20 hover:scale-105 active:scale-95 transition-all"
                         >
                             {mutation.isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                                    Processing
+                                    Analyzing
                                 </>
                             ) : (
-                                "Initiate Task"
+                                "Commit Bug"
                             )}
                         </Button>
                     </DialogFooter>

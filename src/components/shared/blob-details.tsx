@@ -10,16 +10,15 @@ import { Button } from "@/components/ui/button";
 import {
     Loader2,
     FileText,
-    Calendar,
-    User,
     AlertCircle,
     AlertTriangle,
     Info,
-    CheckCircle2,
-    Clock,
     Plus,
     ClipboardCheck,
-    RefreshCw
+    RefreshCw,
+    ChevronRight,
+    Sparkles,
+    ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -50,41 +49,55 @@ export const BlobDetails = () => {
     }
 
     const totalCount = (categories?.task?.total || 0) + (categories?.bug?.total || 0) + (categories?.feature?.total || 0);
+    const path = categories?.path || [];
 
     return (
         <div className="flex flex-col h-full bg-card/10 backdrop-blur-3xl border-l border-primary/10 overflow-hidden">
             {/* Header */}
-            <header className="p-6 border-b border-primary/10 space-y-4 bg-primary/3">
-                <div className="flex items-start justify-between">
-                    <div className="space-y-1.5 font-sans">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-primary/5 text-[10px] uppercase font-black tracking-widest border-primary/10 py-0.5">
-                                File Details
-                            </Badge>
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6 rounded-lg hover:bg-primary/10 transition-all"
-                                onClick={() => queryClient.invalidateQueries({ queryKey: ["tasks", selectedProject?._id, selectedBlob?._id] })}
-                            >
-                                <RefreshCw className={cn("w-3 h-3", isLoading && "animate-spin")} />
-                            </Button>
+            <header className="p-4 border-b border-primary/10 bg-primary/2 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="p-1.5 rounded-lg bg-primary/5 border border-primary/10 shrink-0">
+                            <FileText className="w-4 h-4 text-primary" />
                         </div>
-                        <h2 className="text-xl font-black truncate max-w-[200px] bg-linear-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                            {selectedBlob.name}
-                        </h2>
+                        <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1 overflow-hidden">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-primary/40 shrink-0">Root</span>
+                                {path.map((segment: string, i: number) => (
+                                    <React.Fragment key={i}>
+                                        <ChevronRight className="w-2.5 h-2.5 text-muted-foreground/20 shrink-0" />
+                                        <span className="text-[10px] font-bold text-muted-foreground/40 truncate">
+                                            {segment}
+                                        </span>
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                            <h2 className="text-base font-black truncate bg-linear-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                                {selectedBlob.name}
+                            </h2>
+                        </div>
                     </div>
-                    <div className="p-2.5 rounded-2xl bg-primary/5 border border-primary/10 shadow-inner">
-                        <FileText className="w-5 h-5 text-primary" />
+
+                    <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 rounded-lg hover:bg-primary/5 transition-all"
+                            onClick={() => queryClient.invalidateQueries({ queryKey: ["tasks", selectedProject?._id, selectedBlob?._id] })}
+                        >
+                            <RefreshCw className={cn("w-3 h-3", isLoading && "animate-spin")} />
+                        </Button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-none text-[10px] font-bold px-2 py-0.5">
-                        {totalCount} Total Items
-                    </Badge>
-                    <div className="w-1 h-1 rounded-full bg-primary/20" />
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Active Workspace</span>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-none text-[9px] font-black uppercase tracking-tighter px-1.5 h-4">
+                            {totalCount} Items
+                        </Badge>
+                        <div className="w-1 h-1 rounded-full bg-primary/10" />
+                        <span className="text-[9px] font-black uppercase tracking-[0.15em] opacity-20">Sync Active</span>
+                    </div>
                 </div>
             </header>
 
@@ -114,7 +127,7 @@ export const BlobDetails = () => {
                         <TaskSection
                             title="New Features"
                             type="feature"
-                            icon={Plus}
+                            icon={Sparkles}
                             data={categories?.feature}
                             blobId={selectedBlob._id}
                         />
@@ -135,7 +148,7 @@ const TaskSection = ({ title, type, icon: Icon, data, blobId }: { title: string,
                     <div className={cn(
                         "p-1.5 rounded-lg",
                         type === "bug" ? "bg-rose-500/10 text-rose-500" :
-                            type === "feature" ? "bg-blue-500/10 text-blue-500" :
+                            type === "feature" ? "bg-violet-500/10 text-violet-500" :
                                 "bg-primary/10 text-primary"
                     )}>
                         <Icon className="w-3.5 h-3.5" />
@@ -147,46 +160,86 @@ const TaskSection = ({ title, type, icon: Icon, data, blobId }: { title: string,
                 </div>
                 {data.total > 6 && (
                     <Link href={`/project/workspace/${blobId}/${type}s`} className="text-[10px] font-bold text-primary hover:underline underline-offset-4">
-                        Show More
+                        Show All
                     </Link>
                 )}
             </div>
 
             {data.items.length === 0 ? (
-                <div className="py-4 text-center opacity-20 italic text-[10px]">
-                    No items in this category
+                <div className="py-6 text-center opacity-20 italic text-[10px] border border-dashed border-primary/10 rounded-xl">
+                    No active {type}s detected
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {data.items.map((task: any) => (
+                    {data.items.map((item: any) => (
                         <div
-                            key={task._id}
-                            className="group p-3 rounded-xl border border-primary/5 bg-primary/1 hover:bg-primary/4 transition-all cursor-pointer space-y-2"
+                            key={item._id}
+                            className={cn(
+                                "group p-3 rounded-xl border transition-all cursor-pointer space-y-3",
+                                type === "bug" ? "border-rose-500/5 bg-rose-500/[0.01] hover:bg-rose-500/[0.03] hover:border-rose-500/10" :
+                                    type === "feature" ? "border-violet-500/5 bg-violet-500/[0.01] hover:bg-violet-500/[0.03] hover:border-violet-500/10" :
+                                        "border-primary/5 bg-primary/1 hover:bg-primary/4"
+                            )}
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <h4 className="text-[13px] font-bold line-clamp-1 group-hover:text-primary transition-colors">
-                                    {task.name}
+                                    {item.name}
                                 </h4>
-                                <PriorityBadge priority={task.priority} />
+                                <PriorityBadge priority={item.priority} />
                             </div>
 
-                            <p className="text-[11px] text-muted-foreground/60 line-clamp-1 italic">
-                                {task.description}
+                            <p className="text-[11px] text-muted-foreground/60 line-clamp-2 leading-relaxed">
+                                {item.description}
                             </p>
 
-                            <div className="pt-2 flex items-center justify-between border-t border-primary/5 opacity-60">
-                                <div className="flex items-center gap-2">
-                                    <Avatar className="h-4 w-4 ring-1 ring-primary/10">
-                                        <AvatarImage src={task.assigneeDetails?.image} />
-                                        <AvatarFallback className="text-[7px] font-bold">
-                                            {task.assigneeDetails?.name?.slice(0, 2).toUpperCase() || "??"}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-[9px] font-medium">{task.assigneeDetails?.name || "Unassigned"}</span>
+                            <div className="pt-3 flex flex-col gap-2 border-t border-primary/5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        {/* Main Assignee / Fixer / Lead */}
+                                        <div className="flex items-center gap-1.5">
+                                            <Avatar className="h-5 w-5 border border-primary/10 ring-2 ring-background">
+                                                <AvatarImage src={item.assigneeDetails?.image} />
+                                                <AvatarFallback className="text-[8px] font-black bg-primary/10">
+                                                    {item.assigneeDetails?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] font-black tracking-tight">{item.assigneeDetails?.name || "Pending"}</span>
+                                                <span className="text-[7px] uppercase font-bold opacity-40 tracking-widest leading-none">
+                                                    {type === "bug" ? "Fixer" : type === "feature" ? "Lead" : "Assignee"}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Reporter / Creator */}
+                                        {(item.reporterDetails || item.addedByDetails) && (
+                                            <>
+                                                <ArrowRight className="w-2.5 h-2.5 opacity-20" />
+                                                <div className="flex items-center gap-1.5 opacity-60">
+                                                    <Avatar className="h-4 w-4 border border-primary/10 grayscale">
+                                                        <AvatarImage src={item.reporterDetails?.image || item.addedByDetails?.image} />
+                                                        <AvatarFallback className="text-[6px] font-bold">
+                                                            {(item.reporterDetails?.name || item.addedByDetails?.name)?.slice(0, 2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] font-black">{item.reporterDetails?.name || item.addedByDetails?.name}</span>
+                                                        <span className="text-[6px] uppercase font-bold opacity-60 tracking-widest leading-none">
+                                                            {type === "bug" ? "Reporter" : "Visionary"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col items-end opacity-40 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-1">Deadline</span>
+                                        <span className="text-[9px] font-bold">
+                                            {format(new Date(item.dueDate), "MMM d")}
+                                        </span>
+                                    </div>
                                 </div>
-                                <span className="text-[8px] font-black uppercase tracking-widest opacity-40">
-                                    {format(new Date(task.dueDate), "MMM d, yyyy")}
-                                </span>
                             </div>
                         </div>
                     ))}
