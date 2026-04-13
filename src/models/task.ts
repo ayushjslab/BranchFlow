@@ -19,6 +19,11 @@ const taskSchema = new Schema({
         enum: ["low", "medium", "high"],
         default: "medium"
     },
+    type: {
+        type: String,
+        enum: ["task", "bug", "feature"],
+        default: "task"
+    },
     projectId: {
         type: Schema.Types.ObjectId,
         ref: "Project",

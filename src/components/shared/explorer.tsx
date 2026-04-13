@@ -18,9 +18,11 @@ import {
     MoreVertical,
     Trash,
     Loader2,
-    ClipboardCheck
+    ClipboardCheck,
+    RefreshCw
 } from "lucide-react";
 import { CreateTaskDialog } from "./create-task-dialog";
+import { useProjectStore } from "@/store/useProjectStore";
 
 import {
     DropdownMenu,
@@ -49,6 +51,7 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
     const [isAdding, setIsAdding] = useState<"blob" | "folder" | null>(null);
     const [newItemName, setNewItemName] = useState("");
     const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+    const { setSelectedBlob, selectedBlob } = useProjectStore();
 
     const queryClient = useQueryClient();
 
@@ -99,11 +102,16 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
             <div
                 className={cn(
                     "group flex items-center gap-2 py-1 px-2 rounded-lg cursor-pointer transition-all hover:bg-primary/5",
-                    depth > 0 && "ml-4"
+                    depth > 0 && "ml-4",
+                    selectedBlob?._id === item._id && "bg-primary/10 border-primary/20 shadow-sm shadow-primary/5"
                 )}
-                onClick={() =>
-                    item.type === "folder" && setIsOpen((prev) => !prev)
-                }
+                onClick={() => {
+                    if (item.type === "folder") {
+                        setIsOpen((prev) => !prev);
+                    } else {
+                        setSelectedBlob(item);
+                    }
+                }}
             >
                 {/* Expand Icon */}
                 {item.type === "folder" ? (
@@ -309,17 +317,39 @@ export const Explorer = ({ projectId }: { projectId: string }) => {
     return (
         <div className="flex flex-col h-full bg-card/30 border-r border-primary/10 overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b flex items-center justify-between">
-                <h2 className="text-xs font-bold uppercase text-muted-foreground">
-                    Explorer
-                </h2>
+            <div className="p-4 border-b border-primary/10 flex items-center justify-between bg-primary/5">
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
+                        Explorer
+                    </h2>
+                </div>
 
                 <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setIsAdding("blob")}>
-                        <FilePlus className="w-4 h-4" />
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 rounded-lg hover:bg-primary/10 transition-all hover:scale-110 active:scale-95"
+                        onClick={() => queryClient.invalidateQueries({ queryKey: ["explorer", projectId] })}
+                    >
+                        <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setIsAdding("folder")}>
-                        <FolderPlus className="w-4 h-4" />
+                    <div className="w-px h-4 bg-primary/10 mx-0.5 mt-1.5" />
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 rounded-lg hover:bg-primary/10 transition-all hover:scale-110 active:scale-95"
+                        onClick={() => setIsAdding("blob")}
+                    >
+                        <FilePlus className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 rounded-lg hover:bg-primary/10 transition-all hover:scale-110 active:scale-95"
+                        onClick={() => setIsAdding("folder")}
+                    >
+                        <FolderPlus className="w-3.5 h-3.5" />
                     </Button>
                 </div>
             </div>

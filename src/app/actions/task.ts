@@ -11,6 +11,7 @@ export async function createTask(data: {
     name: string;
     description: string;
     priority: "low" | "medium" | "high";
+    type: "task" | "bug" | "feature";
     assignee: string;
     dueDate: Date;
     projectId: string;
@@ -108,4 +109,68 @@ export async function getProjectMembers(projectId: string) {
     });
 
     return JSON.parse(JSON.stringify(normalizedMembers));
+}
+
+export async function getTasksByBlob(projectId: string, blobId: string) {
+    await connectToDatabase();
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (!session) throw new Error("Unauthorized");
+
+    const tasks = await Task.find({ projectId, blobId })
+        .sort({ createdAt: -1 })
+        .lean();
+
+    // Categorize and limit to 6 recent ones per category
+    const categories = {
+        task: { items: [] as any[], total: 0 },
+        bug: { items: [] as any[], total: 0 },
+        feature: { items: [] as any[], total: 0 }
+    };
+
+    // Fetch user details for all assignees
+    const assigneeIds = tasks.map((t: any) => t.assignee).filter(Boolean);
+    const db = (await clientPromise).db();
+
+    const users = await db.collection("user").find({
+        $or: [
+            { id: { $in: assigneeIds } },
+            { _id: { $in: assigneeIds } },
+            {
+                _id: {
+                    $in: assigneeIds.map((id: string) => {
+                        try { return new (require("mongodb").ObjectId)(id); } catch { return null; }
+                    }).filter(Boolean)
+                }
+            }
+        ]
+    }).toArray();
+
+    const userMap = new Map();
+    users.forEach((u: any) => {
+        if (u.id) userMap.set(u.id, u);
+        if (u._id) userMap.set(u._id.toString(), u);
+    });
+
+    tasks.forEach((task: any) => {
+        const type = (task.type || "task") as keyof typeof categories;
+        const enrichedTask = {
+            ...task,
+            assigneeDetails: task.assignee ? {
+                name: userMap.get(task.assignee)?.name || "Unknown User",
+                image: userMap.get(task.assignee)?.image || ""
+            } : null
+        };
+
+        if (categories[type]) {
+            categories[type].total++;
+            if (categories[type].items.length < 6) {
+                categories[type].items.push(enrichedTask);
+            }
+        }
+    });
+
+    return JSON.parse(JSON.stringify(categories));
 }

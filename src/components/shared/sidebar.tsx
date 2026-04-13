@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
         title: "Members",
         icon: HiOutlineUsers,
         items: [
-            { title: "Manage", href: "/members", icon: HiOutlineAdjustments },
+            { title: "Manage", href: "/members/manage", icon: HiOutlineAdjustments },
             { title: "Settings", href: "/members/settings", icon: HiOutlineCog },
         ],
     },

@@ -44,6 +44,7 @@ export const CreateTaskDialog = ({
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+    const [type, setType] = useState<"task" | "bug" | "feature">("task");
     const [assignee, setAssignee] = useState("");
     const [dueDate, setDueDate] = useState("");
 
@@ -82,6 +83,7 @@ export const CreateTaskDialog = ({
             name,
             description,
             priority,
+            type,
             assignee,
             dueDate: new Date(dueDate),
             projectId,
@@ -123,6 +125,20 @@ export const CreateTaskDialog = ({
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-bold uppercase tracking-wider opacity-60">Type</Label>
+                            <Select value={type} onValueChange={(v: any) => setType(v)}>
+                                <SelectTrigger className="bg-primary/5 border-primary/10 rounded-xl">
+                                    <SelectValue placeholder="Select Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="task">Task</SelectItem>
+                                    <SelectItem value="bug">Bug</SelectItem>
+                                    <SelectItem value="feature">Feature</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase tracking-wider opacity-60">Priority</Label>
                             <Select value={priority} onValueChange={(v: any) => setPriority(v)}>
@@ -187,7 +203,7 @@ export const CreateTaskDialog = ({
                             type="date"
                             value={dueDate}
                             onChange={(e) => setDueDate(e.target.value)}
-                            className="bg-primary/5 border-primary/10 rounded-xl [color-scheme:dark]"
+                            className="bg-primary/5 border-primary/10 rounded-xl scheme-dark"
                         />
                     </div>
 
