@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -12,12 +11,16 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { useSearchParams } from "next/navigation";
 
 const SignInPage = () => {
+    const searchParams = useSearchParams();
+    const callbackURL = searchParams.get("callbackURL") || "/";
+
     const handleSignIn = async () => {
         await authClient.signIn.social({
             provider: "google",
-            callbackURL: "/dashboard",
+            callbackURL,
         });
     };
 

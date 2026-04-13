@@ -48,3 +48,32 @@ export async function getProjects() {
 
     return JSON.parse(JSON.stringify(projects));
 }
+
+export async function joinProject(joinToken: string) {
+    await connectToDatabase();
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (!session) {
+        throw new Error("Unauthorized");
+    }
+
+    const project = await Project.findOne({ joinToken });
+
+    if (!project) {
+        throw new Error("Project not found. Please check the code.");
+    }
+
+    if (project.ownerId === session.user.id || project.members.includes(session.user.id)) {
+        throw new Error("You are already a member of this project.");
+    }
+
+    project.members.push(session.user.id);
+    await project.save();
+
+    revalidatePath("/dashboard");
+    revalidatePath("/members/join");
+
+    return JSON.parse(JSON.stringify(project));
+}

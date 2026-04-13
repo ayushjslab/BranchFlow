@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getProjects } from "@/app/actions/project";
 import { useProjectStore } from "@/store/useProjectStore";
@@ -24,7 +23,6 @@ import {
     HiOutlinePlus
 } from "react-icons/hi";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface ControlNavbarProps {
@@ -33,7 +31,7 @@ interface ControlNavbarProps {
 
 export const ControlNavbar = ({ onMenuClick }: ControlNavbarProps) => {
     const router = useRouter();
-    const { selectedProject, setSelectedProject } = useProjectStore();
+    const { selectedProject, setSelectedProject, reset: resetProjectStore } = useProjectStore();
     const { data: session } = authClient.useSession();
 
     const { data: projects } = useQuery({
@@ -43,6 +41,7 @@ export const ControlNavbar = ({ onMenuClick }: ControlNavbarProps) => {
 
     const handleSignOut = async () => {
         await authClient.signOut();
+        resetProjectStore();
         router.push("/signin");
     };
 
@@ -54,23 +53,23 @@ export const ControlNavbar = ({ onMenuClick }: ControlNavbarProps) => {
                         variant="ghost"
                         size="icon"
                         onClick={onMenuClick}
+                        title="Open Menu"
                         className="lg:hidden h-10 w-10 text-muted-foreground"
                     >
                         <HiOutlineMenuAlt2 className="h-6 w-6" />
                     </Button>
 
-                    {/* Project Selector */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
+                                title="Select Active Project"
                                 className="h-10 px-4 rounded-xl border border-primary/5 bg-muted/30 hover:bg-primary/5 flex items-center gap-2 group transition-all"
                             >
                                 <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
                                     <HiOutlineCube className="h-4 w-4" />
                                 </div>
                                 <div className="flex flex-col items-start leading-none gap-0.5">
-                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Active Project</span>
                                     <span className="text-sm font-black truncate max-w-[120px]">
                                         {selectedProject?.name || "Select Project"}
                                     </span>
@@ -114,14 +113,23 @@ export const ControlNavbar = ({ onMenuClick }: ControlNavbarProps) => {
                 <div className="flex items-center gap-4">
                     <ModeToggle />
 
-                    <Button variant="ghost" size="icon" className="relative h-10 w-10 text-muted-foreground hover:text-primary transition-colors">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Notifications"
+                        className="relative h-10 w-10 text-muted-foreground hover:text-primary transition-colors"
+                    >
                         <HiOutlineBell className="h-6 w-6" />
                         <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
                     </Button>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 overflow-hidden ring-offset-background transition-all hover:ring-2 hover:ring-primary/20">
+                            <Button
+                                variant="ghost"
+                                title="User Profile"
+                                className="relative h-10 w-10 rounded-full p-0 overflow-hidden ring-offset-background transition-all hover:ring-2 hover:ring-primary/20"
+                            >
                                 <Avatar className="h-full w-full">
                                     <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || "User"} />
                                     <AvatarFallback className="bg-primary/10 text-primary font-bold">

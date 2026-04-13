@@ -14,14 +14,20 @@ import {
     HiOutlineChevronDown,
     HiOutlineChevronRight,
     HiOutlineX,
+    HiOutlineAdjustments,
+    HiOutlineCog,
+    HiOutlinePlusCircle,
+    HiOutlineBriefcase,
+    HiOutlineClipboardCheck,
+    HiOutlineCalendar,
 } from "react-icons/hi";
 import { Button } from "@/components/ui/button";
-
+import { GrSend } from "react-icons/gr";
 interface NavItem {
     title: string;
     href?: string;
     icon: React.ElementType;
-    items?: { title: string; href: string }[];
+    items?: { title: string; href: string; icon: React.ElementType }[];
 }
 
 const navItems: NavItem[] = [
@@ -30,29 +36,36 @@ const navItems: NavItem[] = [
         href: "/dashboard",
         icon: HiOutlineViewGrid,
     },
+
     {
         title: "Members",
         icon: HiOutlineUsers,
         items: [
-            { title: "Manage", href: "/members" },
-            { title: "Settings", href: "/members/settings" },
-            { title: "Join", href: "/members/join" },
+            { title: "Manage", href: "/members", icon: HiOutlineAdjustments },
+            { title: "Settings", href: "/members/settings", icon: HiOutlineCog },
         ],
     },
+
     {
         title: "Project",
         icon: HiOutlineCube,
         items: [
-            { title: "Workspace", href: "/project" },
-            { title: "Settings", href: "/project/settings" },
+            { title: "Workspace", href: "/project", icon: HiOutlineBriefcase },
+            { title: "Settings", href: "/project/settings", icon: HiOutlineCog },
+            { title: "Invite", href: "/project/invite", icon: GrSend },
+            {
+                title: "Join Project",
+                href: "/project/join",
+                icon: HiOutlinePlusCircle,
+            },
         ],
     },
     {
         title: "Tasks",
         icon: HiOutlineClipboardList,
         items: [
-            { title: "Assigned", href: "/tasks/assigned" },
-            { title: "Timeline", href: "/tasks/timeline" },
+            { title: "Assigned", href: "/tasks/assigned", icon: HiOutlineClipboardCheck },
+            { title: "Timeline", href: "/tasks/timeline", icon: HiOutlineCalendar },
         ],
     },
 ];
@@ -131,6 +144,7 @@ export const Sidebar = ({
                             {item.href ? (
                                 <Link
                                     href={item.href}
+                                    title={isCollapsed ? item.title : undefined}
                                     className={cn(
                                         "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                                         isActive
@@ -154,6 +168,7 @@ export const Sidebar = ({
                                 <>
                                     <button
                                         onClick={() => toggleSubmenu(item.title)}
+                                        title={isCollapsed ? item.title : undefined}
                                         className={cn(
                                             "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group",
                                             isActive
@@ -196,13 +211,19 @@ export const Sidebar = ({
                                                         key={sub.href}
                                                         href={sub.href}
                                                         className={cn(
-                                                            "block px-3 py-2 text-sm rounded-lg transition-colors relative",
+                                                            "flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors relative group/sub",
                                                             pathname === sub.href
                                                                 ? "text-primary font-bold bg-primary/5"
                                                                 : "text-muted-foreground hover:text-primary hover:bg-primary/5"
                                                         )}
                                                     >
-                                                        {sub.title}
+                                                        <sub.icon
+                                                            className={cn(
+                                                                "text-base shrink-0 transition-transform group-hover/sub:scale-110",
+                                                                pathname === sub.href ? "text-primary" : "text-primary/50"
+                                                            )}
+                                                        />
+                                                        <span>{sub.title}</span>
                                                     </Link>
                                                 ))}
                                             </motion.div>

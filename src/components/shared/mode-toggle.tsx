@@ -25,6 +25,7 @@ export function ModeToggle() {
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
+            title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
             className="relative h-10 w-10 overflow-hidden rounded-md border border-primary/10 bg-background/50 hover:bg-primary/5 transition-colors cursor-pointer"
         >
             <AnimatePresence mode="wait" initial={false}>
