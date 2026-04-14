@@ -481,6 +481,8 @@ export async function getPaginatedFeatures(params: {
     page: number;
     limit: number;
     search?: string;
+    status?: string;
+    priority?: string;
 }) {
     const session = await auth.api.getSession({
         headers: await headers()
@@ -489,10 +491,12 @@ export async function getPaginatedFeatures(params: {
     if (!session) throw new Error("Unauthorized");
     await connectToDatabase();
 
-    const { projectId, page, limit, search } = params;
+    const { projectId, page, limit, search, status, priority } = params;
     const skip = (page - 1) * limit;
 
     const query: any = { projectId };
+    if (status && status !== "all") query.status = status;
+    if (priority && priority !== "all") query.priority = priority;
     if (search) {
         query.$or = [
             { name: { $regex: search, $options: "i" } },

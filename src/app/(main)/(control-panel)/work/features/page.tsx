@@ -15,10 +15,12 @@ const FeaturesPage = () => {
   const { selectedProject } = useProjectStore();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [priority, setPriority] = useState("all");
   const limit = 10;
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["features", selectedProject?._id, page, search],
+    queryKey: ["features", selectedProject?._id, page, search, status, priority],
     queryFn: async () => {
       if (!selectedProject?._id) return null;
       return getPaginatedFeatures({
@@ -26,6 +28,8 @@ const FeaturesPage = () => {
         page,
         limit,
         search: search || undefined,
+        status: status === "all" ? undefined : status,
+        priority: priority === "all" ? undefined : priority,
       });
     },
     enabled: !!selectedProject?._id,
@@ -85,10 +89,10 @@ const FeaturesPage = () => {
         type="feature"
         search={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
-        status="all"
-        onStatusChange={() => { }}
-        priority="all"
-        onPriorityChange={() => { }}
+        status={status}
+        onStatusChange={(v) => { setStatus(v); setPage(1); }}
+        priority={priority}
+        onPriorityChange={(v) => { setPriority(v); setPage(1); }}
       />
 
       {/* Content Area */}

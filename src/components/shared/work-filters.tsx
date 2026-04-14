@@ -37,39 +37,53 @@ const WorkFilters = ({
             </div>
 
             <div className="flex items-center gap-2 w-full md:w-auto">
-                {type !== "feature" && (
-                    <>
-                        <Select value={status} onValueChange={onStatusChange}>
-                            <SelectTrigger className="w-full md:w-[140px] bg-background/50 border-primary/10 rounded-xl h-10">
-                                <div className="flex items-center gap-2">
-                                    <HiOutlineFilter className="w-3.5 h-3.5 opacity-60" />
-                                    <SelectValue placeholder="Status" />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent className="bg-background/80 backdrop-blur-xl border-primary/10 rounded-xl">
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="todo">To Do</SelectItem>
+                <Select value={status} onValueChange={onStatusChange}>
+                    <SelectTrigger className="w-full md:w-[140px] bg-background/50 border-primary/10 rounded-xl h-10">
+                        <div className="flex items-center gap-2">
+                            <HiOutlineFilter className="w-3.5 h-3.5 opacity-60" />
+                            <SelectValue placeholder="Status" />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-background/80 backdrop-blur-xl border-primary/10 rounded-xl">
+                        <SelectItem value="all">All Status</SelectItem>
+                        {type === "feature" ? (
+                            <>
+                                <SelectItem value="proposed">Proposed</SelectItem>
+                                <SelectItem value="planned">Planned</SelectItem>
+                                <SelectItem value="released">Released</SelectItem>
+                            </>
+                        ) : type === "bug" ? (
+                            <>
+                                <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="in-progress">In Progress</SelectItem>
-                                <SelectItem value="done">Done</SelectItem>
-                            </SelectContent>
-                        </Select>
+                                <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="won't fix">Won&apos;t Fix</SelectItem>
+                                <SelectItem value="duplicate">Duplicate</SelectItem>
+                            </>
+                        ) : (
+                            <>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="in-progress">In Progress</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                            </>
+                        )}
+                    </SelectContent>
+                </Select>
 
-                        <Select value={priority} onValueChange={onPriorityChange}>
-                            <SelectTrigger className="w-full md:w-[140px] bg-background/50 border-primary/10 rounded-xl h-10">
-                                <div className="flex items-center gap-2">
-                                    <HiOutlineFilter className="w-3.5 h-3.5 opacity-60" />
-                                    <SelectValue placeholder="Priority" />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent className="bg-background/80 backdrop-blur-xl border-primary/10 rounded-xl">
-                                <SelectItem value="all">All Priority</SelectItem>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </>
-                )}
+                <Select value={priority} onValueChange={onPriorityChange}>
+                    <SelectTrigger className="w-full md:w-[140px] bg-background/50 border-primary/10 rounded-xl h-10">
+                        <div className="flex items-center gap-2">
+                            <HiOutlineFilter className="w-3.5 h-3.5 opacity-60" />
+                            <SelectValue placeholder="Priority" />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-background/80 backdrop-blur-xl border-primary/10 rounded-xl">
+                        <SelectItem value="all">All Priority</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
         </div>
     );
