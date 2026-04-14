@@ -153,3 +153,32 @@ export async function getProjectRole(projectId: string, userId: string): Promise
 }
 
 
+
+/**
+ * Returns the GitHub sync status for the current user+project:
+ * - hasToken: user has a stored GitHub access token (no need to re-auth)
+ * - hasSynced: project.githubSync is true (repo already imported, button should be hidden)
+ */
+export async function getGithubSyncStatus(projectId: string): Promise<{ hasToken: boolean; hasSynced: boolean }> {
+    await connectToDatabase();
+
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) return { hasToken: false, hasSynced: false };
+
+    const { default: UserGithubToken } = await import("@/models/user-github-token");
+
+    const [tokenRecord, project] = await Promise.all([
+        UserGithubToken.findOne({ userId: session.user.id }).lean(),
+        Project.findById(projectId).select("githubSync ownerId").lean(),
+    ]);
+
+    // Only the project owner can see/use the sync button
+    if (!project || project.ownerId !== session.user.id) {
+        return { hasToken: false, hasSynced: true };
+    }
+
+    return {
+        hasToken: !!tokenRecord,
+        hasSynced: !!(project as any).githubSync,
+    };
+}

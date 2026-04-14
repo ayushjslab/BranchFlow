@@ -50,105 +50,134 @@
 
 /* ─────────────────────────────────────────────────────
    LIGHT MODE
-   Exact palette inspired by the screenshot:
-   · Page bg    — very pale lavender  oklch ~#f7f5ff
-   · Card bg    — pure white          #ffffff
-   · Primary    — purple-500          #8b5cf6
-   · Accent/CTA — purple-600          #7c3aed
-   · Text       — near-black          #0f0a1e
-   · Border     — soft lavender       #e5e0f8
+   Jira's palette (Atlassian Design System):
+   · Page bg    — neutral cool-white    #F7F8F9  (Neutral N10)
+   · Card bg    — pure white            #FFFFFF
+   · Primary    — Atlantic Blue 500     #0052CC  (B500)
+   · CTA hover  — Atlantic Blue 700     #0747A6  (B700)
+   · Text       — Ink / Neutral N900    #172B4D
+   · Muted text — Neutral N400          #6B778C
+   · Border     — Neutral N40           #DFE1E6
+   · Success    — Green G400            #006644
+   · Warning    — Yellow Y400           #FF991F
+   · Danger     — Red R400              #DE350B
+   · Charts     — Blue ramp + teal      B300 → B700, teal
 ───────────────────────────────────────────────────── */
 :root {
-  /* Page background — Ultra-clean pale lavender/white */
-  --background: oklch(0.985 0.005 280);
-  --foreground: oklch(0.12 0.02 280);
+  /* Page background — Jira N10 cool neutral */
+  --background: oklch(0.975 0.004 240);
+  --foreground: oklch(0.2 0.04 240);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.12 0.02 280);
+  --card-foreground: oklch(0.2 0.04 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.12 0.02 280);
+  --popover-foreground: oklch(0.2 0.04 240);
 
-  /* Primary Purple — Vibrant and modern */
-  --primary: oklch(0.65 0.22 280);
+  /* Primary — Jira Atlantic Blue B500 #0052CC */
+  --primary: oklch(0.45 0.2 250);
   --primary-foreground: oklch(0.99 0 0);
 
-  --secondary: oklch(0.96 0.01 280);
-  --secondary-foreground: oklch(0.35 0.05 280);
+  /* Secondary — Jira N20 #F4F5F7 surface */
+  --secondary: oklch(0.965 0.005 240);
+  --secondary-foreground: oklch(0.35 0.04 240);
 
-  --muted: oklch(0.96 0.01 280);
-  --muted-foreground: oklch(0.5 0.02 280);
+  /* Muted — Jira N30 #EBECF0 */
+  --muted: oklch(0.945 0.006 240);
+  --muted-foreground: oklch(0.5 0.04 240);
 
-  /* Accent — Slightly deeper for interactive elements */
-  --accent: oklch(0.6 0.23 280);
+  /* Accent — Jira B400 #0065FF (interactive hover) */
+  --accent: oklch(0.5 0.22 255);
   --accent-foreground: oklch(0.99 0 0);
 
-  --destructive: oklch(0.55 0.22 25);
+  /* Destructive — Jira R400 #DE350B */
+  --destructive: oklch(0.52 0.22 25);
 
-  --border: oklch(0.92 0.01 280);
-  --input: oklch(0.92 0.01 280);
-  --ring: oklch(0.65 0.22 280);
+  /* Border — Jira N40 #DFE1E6 */
+  --border: oklch(0.9 0.008 240);
+  --input: oklch(0.9 0.008 240);
+  --ring: oklch(0.45 0.2 250);
 
-  --chart-1: oklch(0.65 0.22 280);
-  --chart-2: oklch(0.6 0.23 280);
-  --chart-3: oklch(0.75 0.15 280);
-  --chart-4: oklch(0.85 0.1 280);
-  --chart-5: oklch(0.5 0.25 280);
+  /* Charts — Jira blue ramp */
+  --chart-1: oklch(0.45 0.2 250);    /* B500 #0052CC */
+  --chart-2: oklch(0.55 0.18 255);   /* B400 #0065FF */
+  --chart-3: oklch(0.65 0.15 255);   /* B300 #4C9AFF */
+  --chart-4: oklch(0.55 0.16 175);   /* Teal T300 #00B8D9 */
+  --chart-5: oklch(0.37 0.18 250);   /* B700 #0747A6 */
 
-  --radius: 0.8rem;
+  --radius: 0.25rem;
 
+  /* Sidebar — Jira dark nav  #0052CC bg or white */
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.2 0.02 280);
-  --sidebar-primary: oklch(0.65 0.22 280);
+  --sidebar-foreground: oklch(0.2 0.04 240);
+  --sidebar-primary: oklch(0.45 0.2 250);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.01 280);
-  --sidebar-accent-foreground: oklch(0.35 0.05 280);
-  --sidebar-border: oklch(0.92 0.01 280);
-  --sidebar-ring: oklch(0.65 0.22 280);
+  --sidebar-accent: oklch(0.965 0.005 240);
+  --sidebar-accent-foreground: oklch(0.35 0.04 240);
+  --sidebar-border: oklch(0.9 0.008 240);
+  --sidebar-ring: oklch(0.45 0.2 250);
 }
 
+/* ─────────────────────────────────────────────────────
+   DARK MODE
+   Jira dark theme (Atlassian dark surface palette):
+   · Page bg    — Elevation 0   #1D2125  (DN10)
+   · Card bg    — Elevation 1   #22272B  (DN20)
+   · Raised     — Elevation 2   #282E33  (DN30)
+   · Primary    — Blue B400     #579DFF
+   · Text       — DN1000 white  #C7D1DB
+   · Muted      — DN600 grey    #738496
+   · Border     — DN100         #2C333A
+───────────────────────────────────────────────────── */
 .dark {
-  /* Deep indigo-black background */
-  --background: oklch(0.08 0.02 280);
-  --foreground: oklch(0.97 0.01 280);
+  /* Page background — Jira DN10 #1D2125 */
+  --background: oklch(0.15 0.01 240);
+  --foreground: oklch(0.85 0.02 235);
 
-  --card: oklch(0.12 0.02 280);
-  --card-foreground: oklch(0.97 0.01 280);
-  --popover: oklch(0.12 0.02 280);
-  --popover-foreground: oklch(0.97 0.01 280);
+  /* Card — Jira DN20 #22272B */
+  --card: oklch(0.17 0.012 240);
+  --card-foreground: oklch(0.85 0.02 235);
+  --popover: oklch(0.17 0.012 240);
+  --popover-foreground: oklch(0.85 0.02 235);
 
-  /* Vivid electric purple */
-  --primary: oklch(0.7 0.2 280);
-  --primary-foreground: oklch(0.99 0 0);
+  /* Primary — Jira dark B400 #579DFF */
+  --primary: oklch(0.68 0.17 255);
+  --primary-foreground: oklch(0.1 0.02 240);
 
-  --secondary: oklch(0.18 0.03 280);
-  --secondary-foreground: oklch(0.9 0.02 280);
+  /* Secondary — Jira DN30 #282E33 */
+  --secondary: oklch(0.2 0.014 240);
+  --secondary-foreground: oklch(0.8 0.02 235);
 
-  --muted: oklch(0.18 0.03 280);
-  --muted-foreground: oklch(0.6 0.02 280);
+  /* Muted — Jira DN40 #2C333A */
+  --muted: oklch(0.22 0.014 240);
+  --muted-foreground: oklch(0.55 0.03 240);
 
-  --accent: oklch(0.65 0.22 280);
-  --accent-foreground: oklch(0.99 0 0);
+  /* Accent — Jira B300 #85B8FF */
+  --accent: oklch(0.74 0.15 255);
+  --accent-foreground: oklch(0.1 0.02 240);
 
-  --destructive: oklch(0.65 0.2 25);
+  /* Destructive — Jira dark R300 #FF5630 */
+  --destructive: oklch(0.62 0.22 25);
 
-  --border: oklch(0.2 0.02 280);
-  --input: oklch(0.2 0.02 280);
-  --ring: oklch(0.7 0.2 280);
+  /* Border — Jira DN100 #2C333A */
+  --border: oklch(0.24 0.014 240);
+  --input: oklch(0.24 0.014 240);
+  --ring: oklch(0.68 0.17 255);
 
-  --chart-1: oklch(0.7 0.2 280);
-  --chart-2: oklch(0.65 0.22 280);
-  --chart-3: oklch(0.75 0.15 285);
-  --chart-4: oklch(0.8 0.12 295);
-  --chart-5: oklch(0.55 0.2 280);
+  /* Charts — bright blue ramp for dark bg */
+  --chart-1: oklch(0.68 0.17 255);   /* B400 dark #579DFF */
+  --chart-2: oklch(0.74 0.15 255);   /* B300 #85B8FF */
+  --chart-3: oklch(0.6 0.16 255);    /* B500 dark #388BFF */
+  --chart-4: oklch(0.7 0.15 185);    /* Teal dark #2CD0E0 */
+  --chart-5: oklch(0.56 0.17 250);   /* B600 dark #1D7AFC */
 
-  --sidebar: oklch(0.1 0.02 280);
-  --sidebar-foreground: oklch(0.97 0.01 280);
-  --sidebar-primary: oklch(0.7 0.2 280);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.18 0.03 280);
-  --sidebar-accent-foreground: oklch(0.9 0.02 280);
-  --sidebar-border: oklch(0.2 0.02 280);
-  --sidebar-ring: oklch(0.7 0.2 280);
+  --sidebar: oklch(0.13 0.014 240);
+  --sidebar-foreground: oklch(0.85 0.02 235);
+  --sidebar-primary: oklch(0.68 0.17 255);
+  --sidebar-primary-foreground: oklch(0.1 0.02 240);
+  --sidebar-accent: oklch(0.2 0.014 240);
+  --sidebar-accent-foreground: oklch(0.8 0.02 235);
+  --sidebar-border: oklch(0.24 0.014 240);
+  --sidebar-ring: oklch(0.68 0.17 255);
 }
 
 /* ─────────────────────────────────────────────────────
@@ -180,17 +209,19 @@
     background: transparent;
   }
 
+  /* Jira blue scrollbar thumb */
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.627 0.232 280 / 40%);
+    background: oklch(0.45 0.2 250 / 40%);
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.627 0.232 280 / 70%);
+    background: oklch(0.45 0.2 250 / 70%);
   }
 
+  /* Jira blue text selection */
   ::selection {
-    background: oklch(0.627 0.232 280 / 25%);
+    background: oklch(0.45 0.2 250 / 20%);
     color: var(--foreground);
   }
 

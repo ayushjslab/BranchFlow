@@ -2,6 +2,9 @@
 
 import { connectToDatabase } from "@/lib/db";
 import Explorer from "@/models/explorer";
+import Task from "@/models/task";
+import Bug from "@/models/bug";
+import Feature from "@/models/feature";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -65,12 +68,22 @@ export async function deleteExplorerItem(id: string) {
     if (!item) throw new Error("Item not found");
 
     if (item.type === "folder") {
-        // Recursive deletion (optional but recommended)
         await deleteChildren(id);
+    } else {
+        // Delete work items for this specific blob
+        await cleanupWorkItems(id);
     }
 
     await Explorer.findByIdAndDelete(id);
     return { success: true };
+}
+
+async function cleanupWorkItems(blobId: string) {
+    await Promise.all([
+        Task.deleteMany({ blobId: blobId }),
+        Bug.deleteMany({ blobId: blobId }),
+        Feature.deleteMany({ blobId: blobId })
+    ]);
 }
 
 async function deleteChildren(parentId: string) {
@@ -78,6 +91,8 @@ async function deleteChildren(parentId: string) {
     for (const child of children) {
         if (child.type === "folder") {
             await deleteChildren(child._id.toString());
+        } else {
+            await cleanupWorkItems(child._id.toString());
         }
         await Explorer.findByIdAndDelete(child._id);
     }

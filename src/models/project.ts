@@ -4,6 +4,10 @@ export interface IProject extends Document {
     ownerId: string;
     name: string;
     description?: string;
+    /** true = repo has been synced once (one-time op) */
+    githubSync: boolean;
+    githubOwner?: string;
+    githubRepo?: string;
     joinToken: string;
     members: { userId: string; role: "manager" | "member" }[];
     createdAt: Date;
@@ -15,6 +19,9 @@ const projectSchema = new Schema<IProject>(
         ownerId: { type: String, required: true, index: true },
         name: { type: String, required: true, trim: true },
         description: { type: String, trim: true },
+        githubSync: { type: Boolean, default: false },
+        githubOwner: { type: String },
+        githubRepo: { type: String },
         joinToken: {
             type: String,
             required: true,

@@ -24,15 +24,59 @@ const AssignedTasksPage = () => {
     const mutation = useMutation({
         mutationFn: (vars: { id: string, type: "task" | "bug" | "feature", status: string, position: number }) =>
             updateWorkItemStatusAndPosition(vars),
-        onSuccess: () => {
+        onMutate: async (newItem) => {
+            // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+            await queryClient.cancelQueries({ queryKey: ["my-work"] });
+
+            // Snapshot the previous value
+            const previousWorkItems = queryClient.getQueryData(["my-work"]);
+
+            // Optimistically update to the new value
+            queryClient.setQueryData(["my-work"], (old: any) => {
+                if (!old) return old;
+
+                const typeKey = newItem.type === "bug" ? "bugs" : newItem.type === "feature" ? "features" : "tasks";
+                const items = [...old[typeKey]];
+                const itemIndex = items.findIndex(i => i._id === newItem.id);
+
+                if (itemIndex === -1) return old;
+
+                // Remove the item from its current position
+                const [movedItem] = items.splice(itemIndex, 1);
+
+                // Update its status and position
+                const updatedItem = { ...movedItem, status: newItem.status, position: newItem.position };
+
+                // Insert it at the new position within the specific status column logic
+                // Actually, just find the new list for that status and insert it
+                // But getMyWorkItems returns a flat list sorted by position.
+                // This is slightly complex to do fully optimistically with just the index.
+                // We'll trust the board's state for now or just force a sync.
+
+                // For a simpler optimistic update, we just update the specific item's status/position
+                items.splice(itemIndex, 0, updatedItem);
+
+                return {
+                    ...old,
+                    [typeKey]: items
+                };
+            });
+
+            // Return a context object with the snapshotted value
+            return { previousWorkItems };
+        },
+        onError: (err, newItem, context: any) => {
+            queryClient.setQueryData(["my-work"], context.previousWorkItems);
+            toast.error("Sync failed. Rolling back.");
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["my-work"] });
-            toast.success("Work item updated", {
+        },
+        onSuccess: () => {
+            toast.success("Position synced", {
                 className: "bg-background/80 backdrop-blur-xl border-primary/10 rounded-xl font-bold",
             });
         },
-        onError: (error: any) => {
-            toast.error(error.message || "Failed to update item");
-        }
     });
 
     const handleMove = (id: string, newStatus: string, newPosition: number) => {

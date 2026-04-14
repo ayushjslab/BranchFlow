@@ -673,12 +673,35 @@ export async function updateWorkItemStatusAndPosition(data: {
     if (!item) throw new Error("Item not found");
 
     // Check ownership/assignment
-    const isAssigned = (data.type === "bug" ? item.fixedBy : data.type === "feature" ? item.addedBy : item.assignee) === session.user.id;
+    const assigneeField = data.type === "bug" ? "fixedBy" : data.type === "feature" ? "addedBy" : "assignee";
+    const isAssigned = item[assigneeField] === session.user.id;
     if (!isAssigned) throw new Error("Unauthorized to move this item");
 
-    if (data.status) item.status = data.status;
-    item.position = data.position;
+    const oldStatus = item.status;
+    const newStatus = data.status || oldStatus;
+    const newPosition = data.position;
 
+    // Update the item itself
+    item.status = newStatus;
+    item.position = newPosition;
     await item.save();
+
+    // Now re-rank all other items in the destination column to ensure uniqueness and order
+    // We fetch all items in the new status for this user
+    const query: any = { [assigneeField]: session.user.id, status: newStatus };
+    const itemsInCol = await Model.find(query).sort({ position: 1, updatedAt: -1 }).lean();
+
+    // Re-verify positions
+    const bulkOps = itemsInCol.map((doc, index) => ({
+        updateOne: {
+            filter: { _id: doc._id },
+            update: { $set: { position: index } }
+        }
+    }));
+
+    if (bulkOps.length > 0) {
+        await Model.bulkWrite(bulkOps as any);
+    }
+
     return { success: true };
 }

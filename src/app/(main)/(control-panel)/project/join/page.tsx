@@ -12,6 +12,7 @@ import { useProjectStore } from "@/store/useProjectStore";
 
 export default function JoinProjectPage() {
     const [code, setCode] = useState("");
+    const [projectId, setProjectId] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const { setSelectedProject } = useProjectStore();
@@ -25,7 +26,7 @@ export default function JoinProjectPage() {
 
         setIsLoading(true);
         try {
-            const project = await joinProject(code);
+            const project = await joinProject(code, projectId || undefined);
             toast.success(`Successfully joined ${project.name}!`);
             setSelectedProject(project);
             router.push("/dashboard");
@@ -49,7 +50,7 @@ export default function JoinProjectPage() {
                 <h1 className="text-4xl font-black tracking-tight mb-4 bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
                     Join a Project
                 </h1>
-                <p className="text-muted-foreground text-lg max-w-md mx-auto">
+                <p className="text-muted-foregrouJirand text-lg max-w-md mx-auto">
                     Collaborate with your team by entering the unique 6-digit project join code.
                 </p>
             </motion.div>
@@ -64,7 +65,21 @@ export default function JoinProjectPage() {
                     <HiOutlineHashtag className="w-32 h-32 rotate-12" />
                 </div>
 
-                <form onSubmit={handleJoin} className="space-y-8 relative z-10">
+                <form onSubmit={handleJoin} className="space-y-6 relative z-10">
+                    <div className="space-y-3">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">
+                            Project ID (Optional Verification)
+                        </label>
+                        <div className="relative group/input">
+                            <Input
+                                value={projectId}
+                                onChange={(e) => setProjectId(e.target.value)}
+                                placeholder="Paste Project ID here"
+                                className="h-14 rounded-2xl border-primary/10 bg-primary/5 focus:bg-background transition-all"
+                            />
+                        </div>
+                    </div>
+
                     <div className="space-y-3">
                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">
                             Project Join Code
