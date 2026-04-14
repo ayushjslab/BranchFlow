@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMyWorkItems } from "@/app/actions/task";
 import { TimelineGrid } from "@/components/shared/timeline-grid";
+import { useProjectStore } from "@/store/useProjectStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Calendar,
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 
 const TimelinePage = () => {
     const [activeTab, setActiveTab] = useState("tasks");
+    const { selectedProject } = useProjectStore();
 
     const { data, isLoading, error, refetch, isFetching } = useQuery({
         queryKey: ["my-work-timeline"],
@@ -58,9 +60,9 @@ const TimelinePage = () => {
         );
     }
 
-    const tasks = data?.tasks || [];
-    const bugs = data?.bugs || [];
-    const features = data?.features || [];
+    const tasks = (data?.tasks || []).filter((t: any) => !selectedProject || t.projectId === selectedProject._id);
+    const bugs = (data?.bugs || []).filter((b: any) => !selectedProject || b.projectId === selectedProject._id);
+    const features = (data?.features || []).filter((f: any) => !selectedProject || f.projectId === selectedProject._id);
 
     const totalWork = tasks.length + bugs.length + features.length;
     const completedWork =
@@ -82,7 +84,11 @@ const TimelinePage = () => {
                         <h1 className="text-2xl font-black tracking-tight uppercase">Assigned Timeline</h1>
                     </div>
                     <p className="text-muted-foreground text-sm flex items-center gap-2">
-                        Visualize your project milestones and deadlines across all assigned work.
+                        {selectedProject ? (
+                            <>Showing work for <span className="text-primary font-bold">{selectedProject.name}</span></>
+                        ) : (
+                            <>Visualize your project milestones and deadlines across all assigned work.</>
+                        )}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">

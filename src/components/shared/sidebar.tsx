@@ -28,6 +28,7 @@ import { CgAssign } from "react-icons/cg";
 import { FaRegHandshake } from "react-icons/fa";
 import { TbCubePlus } from "react-icons/tb";
 import { VscGitPullRequestDone } from "react-icons/vsc";
+import { PiPlugs } from "react-icons/pi";
 
 interface NavItem {
     title: string;
@@ -86,6 +87,11 @@ const navItems: NavItem[] = [
         title: "Github Sync",
         href: "/github-sync",
         icon: VscGitPullRequestDone,
+    },
+    {
+        title: "Integrations",
+        href: "/integrations",
+        icon: PiPlugs,
     }
 ];
 

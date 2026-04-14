@@ -234,7 +234,7 @@ const BugDiscussionPage = () => {
                                     )}
                                     <div className="flex items-start gap-2 group/msg">
                                         <div className={cn(
-                                            "relative text-sm p-3 rounded-2xl bg-card border shadow-sm max-w-[85%] break-words leading-relaxed",
+                                            "relative text-sm p-3 rounded-2xl bg-card border shadow-sm max-w-[85%] wrap-break-word leading-relaxed",
                                             isMe && "bg-primary/5 border-primary/10"
                                         )}>
                                             <div
@@ -269,7 +269,7 @@ const BugDiscussionPage = () => {
 
             {/* Input Area */}
             <div className="p-6 pt-0 mt-auto">
-                <div className="relative bg-background border rounded-3xl shadow-xl p-2 transition-all focus-within:ring-2 focus-within:ring-primary/20 bg-card">
+                <div className="relative bg-background border rounded-3xl shadow-xl p-2 transition-all focus-within:ring-2 focus-within:ring-primary/20">
                     {/* Mention Dropdown */}
                     <AnimatePresence>
                         {isMentionOpen && members && (
