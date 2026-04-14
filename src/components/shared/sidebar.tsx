@@ -9,7 +9,6 @@ import {
     HiOutlineViewGrid,
     HiOutlineUsers,
     HiOutlineCube,
-    HiOutlineClipboardList,
     HiOutlineCreditCard,
     HiOutlineChevronDown,
     HiOutlineChevronRight,
@@ -23,6 +22,13 @@ import {
 } from "react-icons/hi";
 import { Button } from "@/components/ui/button";
 import { GrSend } from "react-icons/gr";
+import { LuBug } from "react-icons/lu";
+import { FaTasks } from "react-icons/fa";
+import { SiSparkpost } from "react-icons/si";
+import { IoCodeWorkingOutline } from "react-icons/io5";
+import { CgAssign } from "react-icons/cg";
+import { FaRegHandshake } from "react-icons/fa";
+import { TbCubePlus } from "react-icons/tb";
 interface NavItem {
     title: string;
     href?: string;
@@ -56,21 +62,24 @@ const navItems: NavItem[] = [
             {
                 title: "Join Project",
                 href: "/project/join",
-                icon: HiOutlinePlusCircle,
+                icon: FaRegHandshake,
             },
             {
                 title: "Create Project",
                 href: "/project/create",
-                icon: HiOutlinePlusCircle,
+                icon: TbCubePlus,
             }
         ],
     },
     {
-        title: "Tasks",
-        icon: HiOutlineClipboardList,
+        title: "Work",
+        icon: IoCodeWorkingOutline,
         items: [
-            { title: "Assigned", href: "/tasks/assigned", icon: HiOutlineClipboardCheck },
-            { title: "Timeline", href: "/tasks/timeline", icon: HiOutlineCalendar },
+            { title: "Assigned", href: "/work/assigned", icon: CgAssign },
+            { title: "Tasks", href: "/work/tasks", icon: FaTasks },
+            {title: "Bugs", href: "/work/bugs", icon: LuBug},
+            {title: "Features", href: "/work/features", icon: SiSparkpost},
+            { title: "Timeline", href: "/work/timeline", icon: HiOutlineCalendar },
         ],
     },
 ];
