@@ -27,6 +27,8 @@ import { IoCodeWorkingOutline } from "react-icons/io5";
 import { CgAssign } from "react-icons/cg";
 import { FaRegHandshake } from "react-icons/fa";
 import { TbCubePlus } from "react-icons/tb";
+import { VscGitPullRequestDone } from "react-icons/vsc";
+
 interface NavItem {
     title: string;
     href?: string;
@@ -80,6 +82,11 @@ const navItems: NavItem[] = [
             { title: "Timeline", href: "/work/timeline", icon: HiOutlineCalendar },
         ],
     },
+    {
+        title: "Github Sync",
+        href: "/github-sync",
+        icon: VscGitPullRequestDone,
+    }
 ];
 
 interface SidebarProps {
