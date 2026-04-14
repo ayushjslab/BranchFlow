@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createBug, getProjectMembers } from "@/app/actions/task";
+import { authClient } from "@/lib/auth-client";
 import {
     Dialog,
     DialogContent,
@@ -45,7 +46,6 @@ export const CreateBugDialog = ({
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [priority, setPriority] = useState<"low" | "medium" | "high">("high");
-    const [reportedBy, setReportedBy] = useState("");
     const [fixedBy, setFixedBy] = useState("");
     const [dueDate, setDueDate] = useState("");
 
@@ -55,16 +55,26 @@ export const CreateBugDialog = ({
         enabled: isOpen,
     });
 
+    const { data: session } = authClient.useSession();
+    const currentUserRole = members?.find((m: any) => m.userId === session?.user?.id)?.role;
+
+    const filteredMembers = members?.filter((member: any) => {
+        if (currentUserRole === "manager") {
+            // Managers can only assign bug fixes to members and other managers
+            return member.role === "member" || member.role === "manager";
+        }
+        return true; // Owners can assign to anyone
+    });
+
     const mutation = useMutation({
         mutationFn: createBug,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["tasks", projectId, blobId] });
+            queryClient.invalidateQueries({ queryKey: ["bugs", projectId, blobId] });
             toast.success("Bug report initiated");
             onClose();
             setName("");
             setDescription("");
             setPriority("high");
-            setReportedBy("");
             setFixedBy("");
             setDueDate("");
         },
@@ -75,8 +85,8 @@ export const CreateBugDialog = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !description || !reportedBy || !dueDate) {
-            toast.error("Please fill in all required fields (Name, Description, Reporter, Deadline)");
+        if (!name || !description || !dueDate) {
+            toast.error("Please fill in all required fields (Name, Description, Deadline)");
             return;
         }
 
@@ -84,7 +94,6 @@ export const CreateBugDialog = ({
             name,
             description,
             priority,
-            reportedBy,
             fixedBy: fixedBy || undefined,
             dueDate: new Date(dueDate),
             projectId,
@@ -163,41 +172,15 @@ export const CreateBugDialog = ({
                             </Select>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Reported By</Label>
-                            <Select value={reportedBy} onValueChange={setReportedBy} disabled={isLoadingMembers}>
-                                <SelectTrigger className="bg-rose-500/5 border-rose-500/10 rounded-xl h-11 hover:bg-rose-500/10 transition-all">
-                                    <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Source"} />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-2xl border-rose-500/10">
-                                    {members?.map((member: any) => (
-                                        <SelectItem key={member.userId || member.id || member._id} value={member.userId || member.id || member._id}>
-                                            <div className="flex items-center gap-2 py-0.5">
-                                                <Avatar className="h-6 w-6 border border-rose-500/10">
-                                                    <AvatarImage src={member.image} />
-                                                    <AvatarFallback className="text-[10px] bg-rose-500/10 font-black">
-                                                        {member.name?.slice(0, 2).toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex flex-col text-left">
-                                                    <span className="text-xs font-black tracking-tight">{member.name}</span>
-                                                    <span className="text-[9px] opacity-40 font-bold uppercase tracking-widest">{member.role}</span>
-                                                </div>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 col-span-2">
                             <Label className="text-xs font-black uppercase tracking-[0.15em] text-rose-500/40 ml-1">Fixer (Optional)</Label>
                             <Select value={fixedBy} onValueChange={setFixedBy} disabled={isLoadingMembers}>
                                 <SelectTrigger className="bg-rose-500/5 border-rose-500/10 rounded-xl h-11 hover:bg-rose-500/10 transition-all">
                                     <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Assigned"} />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-2xl border-rose-500/10">
-                                    {members?.map((member: any) => (
+                                    {filteredMembers?.map((member: any) => (
                                         <SelectItem key={member.userId || member.id || member._id} value={member.userId || member.id || member._id}>
                                             <div className="flex items-center gap-2 py-0.5">
                                                 <Avatar className="h-6 w-6 border border-rose-500/10">

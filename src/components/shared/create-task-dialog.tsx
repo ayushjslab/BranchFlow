@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createTask, getProjectMembers } from "@/app/actions/task";
+import { authClient } from "@/lib/auth-client";
 import {
     Dialog,
     DialogContent,
@@ -53,6 +54,17 @@ export const CreateTaskDialog = ({
         enabled: isOpen,
     });
 
+    const { data: session } = authClient.useSession();
+    const currentUserRole = members?.find((m: any) => m.userId === session?.user?.id)?.role;
+
+    const filteredMembers = members?.filter((member: any) => {
+        if (currentUserRole === "manager") {
+            // Managers can only assign to members and other managers
+            return member.role === "member" || member.role === "manager";
+        }
+        return true; // Owners can assign to anyone
+    });
+
     const mutation = useMutation({
         mutationFn: createTask,
         onSuccess: () => {
@@ -86,7 +98,6 @@ export const CreateTaskDialog = ({
             projectId,
             blobId,
             status: "pending",
-            createdBy: "", // Server will handle this
         });
     };
 
@@ -141,19 +152,19 @@ export const CreateTaskDialog = ({
                                     <SelectItem value="low" className="text-emerald-500 focus:text-emerald-500 focus:bg-emerald-500/10 transition-colors">
                                         <div className="flex items-center gap-2 font-bold uppercase text-[10px]">
                                             <Info className="w-3.5 h-3.5" />
-                                            <span>Routine</span>
+                                            <span>low</span>
                                         </div>
                                     </SelectItem>
                                     <SelectItem value="medium" className="text-amber-500 focus:text-amber-500 focus:bg-amber-500/10 transition-colors">
                                         <div className="flex items-center gap-2 font-bold uppercase text-[10px]">
                                             <AlertTriangle className="w-3.5 h-3.5" />
-                                            <span>Standard</span>
+                                            <span>medium</span>
                                         </div>
                                     </SelectItem>
                                     <SelectItem value="high" className="text-rose-500 focus:text-rose-500 focus:bg-rose-500/10 transition-colors">
                                         <div className="flex items-center gap-2 font-bold uppercase text-[10px]">
                                             <AlertCircle className="w-3.5 h-3.5" />
-                                            <span>Critical</span>
+                                            <span>high</span>
                                         </div>
                                     </SelectItem>
                                 </SelectContent>
@@ -167,7 +178,7 @@ export const CreateTaskDialog = ({
                                     <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Operator"} />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-2xl border-primary/10">
-                                    {members?.map((member: any) => (
+                                    {filteredMembers?.map((member: any) => (
                                         <SelectItem key={member.userId || member.id || member._id} value={member.userId || member.id || member._id}>
                                             <div className="flex items-center gap-2 py-0.5">
                                                 <Avatar className="h-6 w-6 border border-primary/10">

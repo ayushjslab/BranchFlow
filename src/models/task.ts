@@ -40,6 +40,10 @@ const taskSchema = new Schema({
     createdBy: {
         type: String, // User ID
         required: true
+    },
+    position: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

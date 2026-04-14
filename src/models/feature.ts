@@ -18,10 +18,32 @@ const featureSchema = new Schema({
         type: String, // User ID (Who added the feature)
         required: true
     },
+    priority: {
+        type: String,
+        enum: ["low", "medium", "high"],
+        default: "medium"
+    },
+    dueDate: {
+        type: Date,
+        required: true
+    },
+    assignee: {
+        type: String, // User ID (Who is responsible for implementing)
+        default: null
+    },
     blobId: {
         type: Schema.Types.ObjectId,
         ref: "Explorer",
         required: true
+    },
+    status: {
+        type: String,
+        enum: ["proposed", "planned", "released"],
+        default: "proposed"
+    },
+    position: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

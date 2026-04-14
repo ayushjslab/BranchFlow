@@ -10,6 +10,7 @@ import Feature from "@/models/feature";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import mongoose from "mongoose";
+import { getProjectRole } from "./project";
 
 export async function createTask(data: {
     name: string;
@@ -20,7 +21,7 @@ export async function createTask(data: {
     assignee: string;
     dueDate: Date;
     blobId: string;
-    createdBy: string;
+    createdBy?: string;
 }) {
     const session = await auth.api.getSession({
         headers: await headers()
@@ -29,7 +30,23 @@ export async function createTask(data: {
     if (!session) throw new Error("Unauthorized");
     await connectToDatabase();
 
-    const task = await Task.create(data);
+    const role = await getProjectRole(data.projectId, session.user.id);
+    if (role === "member") {
+        throw new Error("Members cannot create tasks. Only owners and managers are authorized.");
+    }
+
+    // Role-based assignment check for managers
+    if (role === "manager" && data.assignee) {
+        const assigneeRole = await getProjectRole(data.projectId, data.assignee);
+        if (assigneeRole === "owner") {
+            throw new Error("Managers cannot assign work to the project owner.");
+        }
+    }
+
+    const task = await Task.create({
+        ...data,
+        createdBy: session.user.id
+    });
     return JSON.parse(JSON.stringify(task));
 }
 
@@ -40,7 +57,7 @@ export async function createBug(data: {
     projectId: string;
     blobId: string;
     status: string;
-    reportedBy: string;
+    reportedBy?: string;
     fixedBy?: string;
     dueDate: Date;
 }) {
@@ -51,16 +68,34 @@ export async function createBug(data: {
     if (!session) throw new Error("Unauthorized");
     await connectToDatabase();
 
-    const bug = await Bug.create(data);
+    // Members CAN create bugs as per user request ("members can report only bugs")
+    const role = await getProjectRole(data.projectId, session.user.id);
+    if (!role) throw new Error("You are not a member of this project.");
+
+    // Role-based assignment check for managers
+    if (role === "manager" && data.fixedBy) {
+        const fixedByRole = await getProjectRole(data.projectId, data.fixedBy);
+        if (fixedByRole === "owner") {
+            throw new Error("Managers cannot assign bug fixes to the project owner.");
+        }
+    }
+
+    const bug = await Bug.create({
+        ...data,
+        reportedBy: session.user.id
+    });
     return JSON.parse(JSON.stringify(bug));
 }
 
 export async function createFeature(data: {
     name: string;
     description: string;
+    priority: "low" | "medium" | "high";
+    dueDate: Date;
     projectId: string;
     blobId: string;
-    addedBy: string;
+    addedBy?: string;
+    assignee?: string;
 }) {
     const session = await auth.api.getSession({
         headers: await headers()
@@ -69,7 +104,23 @@ export async function createFeature(data: {
     if (!session) throw new Error("Unauthorized");
     await connectToDatabase();
 
-    const feature = await Feature.create(data);
+    const role = await getProjectRole(data.projectId, session.user.id);
+    if (role === "member") {
+        throw new Error("Members cannot announce features. Only owners and managers are authorized.");
+    }
+
+    // Role-based assignment check for managers
+    if (role === "manager" && data.assignee) {
+        const assigneeRole = await getProjectRole(data.projectId, data.assignee);
+        if (assigneeRole === "owner") {
+            throw new Error("Managers cannot assign features to the project owner.");
+        }
+    }
+
+    const feature = await Feature.create({
+        ...data,
+        addedBy: session.user.id
+    });
     return JSON.parse(JSON.stringify(feature));
 }
 
@@ -84,10 +135,13 @@ export async function getProjectMembers(projectId: string) {
     const project = await Project.findById(projectId).lean();
     if (!project) throw new Error("Project not found");
 
-    const memberDetails = project.members.map((m: any) => ({
-        userId: typeof m === "string" ? m : m.userId,
-        role: typeof m === "string" ? "member" : m.role
-    }));
+    const memberDetails = project.members.map((m: any) => {
+        const uid = typeof m === "string" ? m : m.userId;
+        return {
+            userId: uid,
+            role: project.ownerId === uid ? "owner" : (typeof m === "string" ? "member" : m.role)
+        };
+    });
 
     const userIds = memberDetails.map(m => m.userId);
     const db = (await clientPromise).db();
@@ -552,7 +606,79 @@ export async function deleteWorkItem(params: {
 
     const ownerId = (item as any).createdBy || (item as any).reportedBy || (item as any).addedBy;
     if (ownerId !== session.user.id) throw new Error("Only the creator can delete this item");
-
     await Model.findByIdAndDelete(id);
+    return { success: true };
+}
+
+export async function getMyWorkItems() {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) throw new Error("Unauthorized");
+    const userId = session.user.id;
+
+    await connectToDatabase();
+
+    const [tasks, bugs, features] = await Promise.all([
+        Task.find({ assignee: userId }).sort({ position: 1, createdAt: -1 }).lean(),
+        Bug.find({ fixedBy: userId }).sort({ position: 1, createdAt: -1 }).lean(),
+        Feature.find({
+            $or: [
+                { addedBy: userId },
+                { assignee: userId }
+            ]
+        }).sort({ position: 1, createdAt: -1 }).lean()
+    ]);
+
+    // Hydrate paths for all items
+    const hydrate = async (items: any[]) => {
+        return Promise.all(items.map(async (item) => {
+            const path: string[] = [];
+            let current: any = await Explorer.findById(item.blobId).lean();
+            if (current) {
+                path.unshift(current.name);
+                while (current.parent) {
+                    current = await Explorer.findById(current.parent).lean();
+                    if (current) path.unshift(current.name);
+                    else break;
+                }
+            }
+            return { ...item, filePath: path.join(" / ") };
+        }));
+    };
+
+    return JSON.parse(JSON.stringify({
+        tasks: await hydrate(tasks),
+        bugs: await hydrate(bugs),
+        features: await hydrate(features)
+    }));
+}
+
+export async function updateWorkItemStatusAndPosition(data: {
+    id: string;
+    type: "task" | "bug" | "feature";
+    status?: string;
+    position: number;
+}) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) throw new Error("Unauthorized");
+    await connectToDatabase();
+
+    const Model = data.type === "bug" ? Bug : data.type === "feature" ? Feature : Task;
+    const item = await Model.findById(data.id);
+    if (!item) throw new Error("Item not found");
+
+    // Check ownership/assignment
+    const isAssigned = (data.type === "bug" ? item.fixedBy : data.type === "feature" ? item.addedBy : item.assignee) === session.user.id;
+    if (!isAssigned) throw new Error("Unauthorized to move this item");
+
+    if (data.status) item.status = data.status;
+    item.position = data.position;
+
+    await item.save();
     return { success: true };
 }

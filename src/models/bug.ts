@@ -40,6 +40,10 @@ const bugSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "Explorer",
         required: true
+    },
+    position: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

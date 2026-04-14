@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFeature, getProjectMembers } from "@/app/actions/task";
+import { authClient } from "@/lib/auth-client";
 import {
     Dialog,
     DialogContent,
@@ -44,7 +45,9 @@ export const CreateFeatureDialog = ({
     const queryClient = useQueryClient();
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [addedBy, setAddedBy] = useState("");
+    const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+    const [dueDate, setDueDate] = useState("");
+    const [assignee, setAssignee] = useState("");
 
     const { data: members, isLoading: isLoadingMembers } = useQuery({
         queryKey: ["project-members", projectId],
@@ -52,15 +55,28 @@ export const CreateFeatureDialog = ({
         enabled: isOpen,
     });
 
+    const { data: session } = authClient.useSession();
+    const currentUserRole = members?.find((m: any) => m.userId === session?.user?.id)?.role;
+
+    const filteredMembers = members?.filter((member: any) => {
+        if (currentUserRole === "manager") {
+            // Managers can only assign features to members and other managers
+            return member.role === "member" || member.role === "manager";
+        }
+        return true; // Owners can assign to anyone
+    });
+
     const mutation = useMutation({
         mutationFn: createFeature,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["tasks", projectId, blobId] });
+            queryClient.invalidateQueries({ queryKey: ["features", projectId, blobId] });
             toast.success("Feature announced successfully");
             onClose();
             setName("");
             setDescription("");
-            setAddedBy("");
+            setPriority("medium");
+            setDueDate("");
+            setAssignee("");
         },
         onError: (error: any) => {
             toast.error(error.message);
@@ -69,15 +85,17 @@ export const CreateFeatureDialog = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !description || !addedBy) {
-            toast.error("Please fill in all required fields (Title, Message, Visionary)");
+        if (!name || !description || !dueDate) {
+            toast.error("Please fill in all required fields (Title, Message, Target Date)");
             return;
         }
 
         mutation.mutate({
             name,
             description,
-            addedBy,
+            priority,
+            dueDate: new Date(dueDate),
+            assignee: assignee || undefined,
             projectId,
             blobId,
         });
@@ -123,23 +141,65 @@ export const CreateFeatureDialog = ({
                         />
                     </div>
 
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase tracking-[0.15em] text-violet-500/40 ml-1">Priority</Label>
+                            <Select value={priority} onValueChange={(v: any) => setPriority(v)}>
+                                <SelectTrigger className="bg-violet-500/5 border-violet-500/10 rounded-xl h-11 hover:bg-violet-500/10 transition-all">
+                                    <SelectValue placeholder="Impact" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-violet-500/10">
+                                    <SelectItem value="low" className="text-emerald-500 focus:text-emerald-500 focus:bg-emerald-500/10 transition-colors">
+                                        <div className="flex items-center gap-2 font-bold uppercase text-[10px]">
+                                            <Info className="w-3.5 h-3.5" />
+                                            <span>Low</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="medium" className="text-amber-500 focus:text-amber-500 focus:bg-amber-500/10 transition-colors">
+                                        <div className="flex items-center gap-2 font-bold uppercase text-[10px]">
+                                            <AlertTriangle className="w-3.5 h-3.5" />
+                                            <span>Medium</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="high" className="text-rose-500 focus:text-rose-500 focus:bg-rose-500/10 transition-colors">
+                                        <div className="flex items-center gap-2 font-bold uppercase text-[10px]">
+                                            <AlertCircle className="w-3.5 h-3.5" />
+                                            <span>High</span>
+                                        </div>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="dueDate" className="text-xs font-black uppercase tracking-[0.15em] text-violet-500/40 ml-1">Target Date</Label>
+                            <Input
+                                id="dueDate"
+                                type="date"
+                                value={dueDate}
+                                onChange={(e) => setDueDate(e.target.value)}
+                                className="bg-violet-500/5 border-violet-500/10 rounded-xl h-11 transition-all font-black uppercase text-[10px] tracking-widest cursor-pointer scheme-dark"
+                            />
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
-                        <Label className="text-xs font-black uppercase tracking-[0.15em] text-violet-500/40 ml-1">Visionary</Label>
-                        <Select value={addedBy} onValueChange={setAddedBy} disabled={isLoadingMembers}>
-                            <SelectTrigger className="bg-violet-500/5 border-violet-500/10 rounded-xl h-11 hover:bg-violet-500/10 transition-all">
-                                <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Select Visionary"} />
+                        <Label className="text-xs font-black uppercase tracking-[0.15em] text-violet-500/40 ml-1">Responsible Agent</Label>
+                        <Select value={assignee} onValueChange={setAssignee} disabled={isLoadingMembers}>
+                            <SelectTrigger className="bg-violet-500/5 border-violet-500/10 rounded-xl h-11 hover:bg-violet-500/10 transition-all font-medium">
+                                <SelectValue placeholder={isLoadingMembers ? "Sync..." : "Assigned"} />
                             </SelectTrigger>
                             <SelectContent className="rounded-2xl border-violet-500/10">
-                                {members?.map((member: any) => (
+                                {filteredMembers?.map((member: any) => (
                                     <SelectItem key={member.userId || member.id || member._id} value={member.userId || member.id || member._id}>
-                                        <div className="flex items-center gap-2 py-0.5">
+                                        <div className="flex items-center gap-2 py-0.5 text-left">
                                             <Avatar className="h-6 w-6 border border-violet-500/10">
                                                 <AvatarImage src={member.image} />
                                                 <AvatarFallback className="text-[10px] bg-violet-500/10 font-black">
                                                     {member.name?.slice(0, 2).toUpperCase()}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            <div className="flex flex-col text-left">
+                                            <div className="flex flex-col">
                                                 <span className="text-xs font-black tracking-tight">{member.name}</span>
                                                 <span className="text-[9px] opacity-40 font-bold uppercase tracking-widest">{member.role}</span>
                                             </div>

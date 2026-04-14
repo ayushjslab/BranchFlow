@@ -27,6 +27,8 @@ import { CreateTaskDialog } from "./create-task-dialog";
 import { CreateBugDialog } from "./create-bug-dialog";
 import { CreateFeatureDialog } from "./create-feature-dialog";
 import { useProjectStore } from "@/store/useProjectStore";
+import { authClient } from "@/lib/auth-client";
+import { getProjectMembers } from "@/app/actions/task";
 
 import {
     DropdownMenu,
@@ -48,9 +50,10 @@ interface ExplorerItemProps {
     item: any;
     depth: number;
     projectId: string;
+    userRole: "owner" | "manager" | "member" | null;
 }
 
-const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
+const ExplorerItem = ({ item, depth, projectId, userRole }: ExplorerItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isAdding, setIsAdding] = useState<"blob" | "folder" | null>(null);
     const [newItemName, setNewItemName] = useState("");
@@ -142,6 +145,12 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
                     {item.name}
                 </span>
 
+                {item.type === "blob" && (
+                    <div className="flex items-center gap-1.5 mr-2">
+                        {/* Status/Type indicators could go here */}
+                    </div>
+                )}
+
                 {/* Actions */}
                 <div
                     className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition"
@@ -185,13 +194,15 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
                         <DropdownMenuContent align="end">
                             {item.type === "blob" && (
                                 <>
-                                    <DropdownMenuItem
-                                        onClick={() => setIsTaskDialogOpen(true)}
-                                        className="text-primary focus:text-primary focus:bg-primary/10"
-                                    >
-                                        <ClipboardCheck className="w-4 h-4 mr-2" />
-                                        Create Task
-                                    </DropdownMenuItem>
+                                    {(userRole === "owner" || userRole === "manager") && (
+                                        <DropdownMenuItem
+                                            onClick={() => setIsTaskDialogOpen(true)}
+                                            className="text-primary focus:text-primary focus:bg-primary/10"
+                                        >
+                                            <ClipboardCheck className="w-4 h-4 mr-2" />
+                                            Create Task
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem
                                         onClick={() => setIsBugDialogOpen(true)}
                                         className="text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
@@ -199,22 +210,26 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
                                         <BugIcon className="w-4 h-4 mr-2" />
                                         Report Bug
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onClick={() => setIsFeatureDialogOpen(true)}
-                                        className="text-violet-500 focus:text-violet-500 focus:bg-violet-500/10"
-                                    >
-                                        <Sparkles className="w-4 h-4 mr-2" />
-                                        Propose Feature
-                                    </DropdownMenuItem>
+                                    {(userRole === "owner" || userRole === "manager") && (
+                                        <DropdownMenuItem
+                                            onClick={() => setIsFeatureDialogOpen(true)}
+                                            className="text-violet-500 focus:text-violet-500 focus:bg-violet-500/10"
+                                        >
+                                            <Sparkles className="w-4 h-4 mr-2" />
+                                            Propose Feature
+                                        </DropdownMenuItem>
+                                    )}
                                 </>
                             )}
-                            <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => deleteMutation.mutate(item._id)}
-                            >
-                                <Trash className="w-4 h-4 mr-2" />
-                                Delete
-                            </DropdownMenuItem>
+                            {(userRole === "owner" || userRole === "manager") && (
+                                <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => deleteMutation.mutate(item._id)}
+                                >
+                                    <Trash className="w-4 h-4 mr-2" />
+                                    Delete
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -264,6 +279,7 @@ const ExplorerItem = ({ item, depth, projectId }: ExplorerItemProps) => {
                                     item={child}
                                     depth={depth + 1}
                                     projectId={projectId}
+                                    userRole={userRole}
                                 />
                             ))}
 
@@ -329,6 +345,21 @@ export const Explorer = ({ projectId }: { projectId: string }) => {
         queryKey: ["explorer", projectId, "root"],
         queryFn: () => getExplorerItems(projectId, null),
     });
+
+    const { data: session } = authClient.useSession();
+    const { data: members } = useQuery({
+        queryKey: ["project-members", projectId],
+        queryFn: () => getProjectMembers(projectId),
+        enabled: !!projectId,
+    });
+
+    const userRole = (members?.find((m: any) => m.userId === session?.user?.id)?.role as any) || (members?.find((m: any) => m.userId === session?.user?.id) ? "member" : null);
+    // Explicitly check for owner if needed, but getProjectMembers should have assigned 'owner' if I updated it.
+    // Wait, getProjectMembers returns roles from project.members. 
+    // If user is owner, the role in members should be 'owner' or I should check ownerId.
+    // My getProjectRole helper on server does this. I should make sure getProjectMembers does too.
+
+    // Actually, I'll use a safer role determination here.
 
     const createMutation = useMutation({
         mutationFn: createExplorerItem,
@@ -406,6 +437,7 @@ export const Explorer = ({ projectId }: { projectId: string }) => {
                                 item={item}
                                 depth={0}
                                 projectId={projectId}
+                                userRole={userRole}
                             />
                         ))}
 

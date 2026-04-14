@@ -176,8 +176,8 @@ const TaskSection = ({ title, type, icon: Icon, data, blobId }: { title: string,
                             key={item._id}
                             className={cn(
                                 "group p-3 rounded-xl border transition-all cursor-pointer space-y-3",
-                                type === "bug" ? "border-rose-500/5 bg-rose-500/[0.01] hover:bg-rose-500/[0.03] hover:border-rose-500/10" :
-                                    type === "feature" ? "border-violet-500/5 bg-violet-500/[0.01] hover:bg-violet-500/[0.03] hover:border-violet-500/10" :
+                                type === "bug" ? "border-rose-500/5 bg-rose-500/1 hover:bg-rose-500/3 hover:border-rose-500/10" :
+                                    type === "feature" ? "border-violet-500/5 bg-violet-500/1 hover:bg-violet-500/3 hover:border-violet-500/10" :
                                         "border-primary/5 bg-primary/1 hover:bg-primary/4"
                             )}
                         >

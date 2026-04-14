@@ -141,4 +141,15 @@ export async function removeMember(projectId: string, userId: string) {
     return { success: true };
 }
 
+export async function getProjectRole(projectId: string, userId: string): Promise<"owner" | "manager" | "member" | null> {
+    await connectToDatabase();
+    const project = await Project.findById(projectId).lean();
+    if (!project) return null;
+
+    if (project.ownerId === userId) return "owner";
+
+    const member = (project.members as any[]).find(m => m.userId === userId);
+    return member ? member.role : null;
+}
+
 
