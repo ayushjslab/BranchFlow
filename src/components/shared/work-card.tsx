@@ -10,6 +10,7 @@ import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import WorkDetailDialog from "./work-detail-dialog";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 interface WorkCardProps {
     item: any;
@@ -42,11 +43,12 @@ const WorkCard = ({ item, type }: WorkCardProps) => {
 
     const creatorId = item.createdBy || item.reportedBy || item.addedBy;
     const isOwner = session?.user?.id === creatorId;
+    const router = useRouter();
 
     return (
         <>
             <div
-                onClick={() => setIsDetailOpen(true)}
+                onClick={() => router.push(`/work/${type}s/${item._id}`)}
                 className={cn(
                     "group relative bg-primary/5 border border-primary/10 rounded-2xl p-5 hover:bg-primary/8 hover:border-primary/20 transition-all cursor-pointer overflow-hidden",
                     isBug && "border-rose-500/10 bg-rose-500/2 hover:bg-rose-500/5 hover:border-rose-500/20",

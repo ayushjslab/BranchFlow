@@ -98,11 +98,16 @@
   --ring: oklch(0.45 0.2 250);
 
   /* Charts — Jira blue ramp */
-  --chart-1: oklch(0.45 0.2 250);    /* B500 #0052CC */
-  --chart-2: oklch(0.55 0.18 255);   /* B400 #0065FF */
-  --chart-3: oklch(0.65 0.15 255);   /* B300 #4C9AFF */
-  --chart-4: oklch(0.55 0.16 175);   /* Teal T300 #00B8D9 */
-  --chart-5: oklch(0.37 0.18 250);   /* B700 #0747A6 */
+  --chart-1: oklch(0.45 0.2 250);
+  /* B500 #0052CC */
+  --chart-2: oklch(0.55 0.18 255);
+  /* B400 #0065FF */
+  --chart-3: oklch(0.65 0.15 255);
+  /* B300 #4C9AFF */
+  --chart-4: oklch(0.55 0.16 175);
+  /* Teal T300 #00B8D9 */
+  --chart-5: oklch(0.37 0.18 250);
+  /* B700 #0747A6 */
 
   --radius: 0.25rem;
 
@@ -164,11 +169,16 @@
   --ring: oklch(0.68 0.17 255);
 
   /* Charts — bright blue ramp for dark bg */
-  --chart-1: oklch(0.68 0.17 255);   /* B400 dark #579DFF */
-  --chart-2: oklch(0.74 0.15 255);   /* B300 #85B8FF */
-  --chart-3: oklch(0.6 0.16 255);    /* B500 dark #388BFF */
-  --chart-4: oklch(0.7 0.15 185);    /* Teal dark #2CD0E0 */
-  --chart-5: oklch(0.56 0.17 250);   /* B600 dark #1D7AFC */
+  --chart-1: oklch(0.68 0.17 255);
+  /* B400 dark #579DFF */
+  --chart-2: oklch(0.74 0.15 255);
+  /* B300 #85B8FF */
+  --chart-3: oklch(0.6 0.16 255);
+  /* B500 dark #388BFF */
+  --chart-4: oklch(0.7 0.15 185);
+  /* Teal dark #2CD0E0 */
+  --chart-5: oklch(0.56 0.17 250);
+  /* B600 dark #1D7AFC */
 
   --sidebar: oklch(0.13 0.014 240);
   --sidebar-foreground: oklch(0.85 0.02 235);

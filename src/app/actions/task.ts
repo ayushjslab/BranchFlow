@@ -673,9 +673,17 @@ export async function updateWorkItemStatusAndPosition(data: {
     if (!item) throw new Error("Item not found");
 
     // Check ownership/assignment
-    const assigneeField = data.type === "bug" ? "fixedBy" : data.type === "feature" ? "addedBy" : "assignee";
-    const isAssigned = item[assigneeField] === session.user.id;
-    if (!isAssigned) throw new Error("Unauthorized to move this item");
+    const role = await getProjectRole(item.projectId.toString(), session.user.id);
+    const isPowerUser = role === "owner" || role === "manager";
+
+    const assigneeField = data.type === "bug" ? "fixedBy" : data.type === "feature" ? "assignee" : "assignee";
+    const creatorField = data.type === "bug" ? "reportedBy" : data.type === "feature" ? "addedBy" : "createdBy";
+
+    const isAssigned = (item as any)[assigneeField] === session.user.id || (item as any)[creatorField] === session.user.id;
+
+    if (!isAssigned && !isPowerUser) {
+        throw new Error("Unauthorized to move this item. You must be the assignee, creator, or a project manager/owner.");
+    }
 
     const oldStatus = item.status;
     const newStatus = data.status || oldStatus;
@@ -704,4 +712,18 @@ export async function updateWorkItemStatusAndPosition(data: {
     }
 
     return { success: true };
+}
+
+export async function getBugById(bugId: string) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) throw new Error("Unauthorized");
+    await connectToDatabase();
+
+    const bug = await Bug.findById(bugId).lean();
+    if (!bug) throw new Error("Bug not found");
+
+    return JSON.parse(JSON.stringify(bug));
 }
