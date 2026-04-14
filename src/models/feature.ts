@@ -6,18 +6,8 @@ const featureSchema = new Schema({
         required: true
     },
     description: {
-        type: String,
+        type: String, // This acts as the "message" or details of the new feature
         required: true
-    },
-    status: {
-        type: String,
-        enum: ["planning", "development", "testing", "deployed"],
-        default: "planning"
-    },
-    priority: {
-        type: String,
-        enum: ["low", "medium", "high"],
-        default: "medium"
     },
     projectId: {
         type: Schema.Types.ObjectId,
@@ -25,15 +15,7 @@ const featureSchema = new Schema({
         required: true
     },
     addedBy: {
-        type: String, // User ID (Creator)
-        required: true
-    },
-    assignee: {
-        type: String, // User ID
-        default: null
-    },
-    dueDate: {
-        type: Date,
+        type: String, // User ID (Who added the feature)
         required: true
     },
     blobId: {

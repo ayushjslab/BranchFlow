@@ -57,13 +57,9 @@ export async function createBug(data: {
 export async function createFeature(data: {
     name: string;
     description: string;
-    priority: "low" | "medium" | "high";
     projectId: string;
     blobId: string;
-    status: string;
     addedBy: string;
-    assignee?: string;
-    dueDate: Date;
 }) {
     const session = await auth.api.getSession({
         headers: await headers()
@@ -133,7 +129,6 @@ export async function getTasksByBlob(projectId: string, blobId: string) {
         ...bugs.map((b: any) => b.reportedBy),
         ...bugs.map((b: any) => b.fixedBy),
         ...features.map((f: any) => f.addedBy),
-        ...features.map((f: any) => f.assignee),
     ].filter(Boolean));
 
     const assigneeIds = Array.from(allUserIds);
@@ -181,10 +176,6 @@ export async function getTasksByBlob(projectId: string, blobId: string) {
 
     categories.feature.items = features.slice(0, 6).map((feature: any) => ({
         ...feature,
-        assigneeDetails: feature.assignee ? {
-            name: userMap.get(feature.assignee)?.name || "Unknown User",
-            image: userMap.get(feature.assignee)?.image || ""
-        } : null,
         addedByDetails: feature.addedBy ? {
             name: userMap.get(feature.addedBy)?.name || "Unknown User",
             image: userMap.get(feature.addedBy)?.image || ""

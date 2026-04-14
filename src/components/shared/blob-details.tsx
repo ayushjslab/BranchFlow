@@ -185,7 +185,7 @@ const TaskSection = ({ title, type, icon: Icon, data, blobId }: { title: string,
                                 <h4 className="text-[13px] font-bold line-clamp-1 group-hover:text-primary transition-colors">
                                     {item.name}
                                 </h4>
-                                <PriorityBadge priority={item.priority} />
+                                {item.priority && <PriorityBadge priority={item.priority} />}
                             </div>
 
                             <p className="text-[11px] text-muted-foreground/60 line-clamp-2 leading-relaxed">
@@ -195,37 +195,39 @@ const TaskSection = ({ title, type, icon: Icon, data, blobId }: { title: string,
                             <div className="pt-3 flex flex-col gap-2 border-t border-primary/5">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        {/* Main Assignee / Fixer / Lead */}
+                                        {/* Main User Display */}
                                         <div className="flex items-center gap-1.5">
                                             <Avatar className="h-5 w-5 border border-primary/10 ring-2 ring-background">
-                                                <AvatarImage src={item.assigneeDetails?.image} />
+                                                <AvatarImage src={item.assigneeDetails?.image || item.addedByDetails?.image} />
                                                 <AvatarFallback className="text-[8px] font-black bg-primary/10">
-                                                    {item.assigneeDetails?.name?.slice(0, 2).toUpperCase() || "??"}
+                                                    {(item.assigneeDetails?.name || item.addedByDetails?.name)?.slice(0, 2).toUpperCase() || "??"}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
-                                                <span className="text-[9px] font-black tracking-tight">{item.assigneeDetails?.name || "Pending"}</span>
+                                                <span className="text-[9px] font-black tracking-tight">
+                                                    {item.assigneeDetails?.name || item.addedByDetails?.name || "Pending"}
+                                                </span>
                                                 <span className="text-[7px] uppercase font-bold opacity-40 tracking-widest leading-none">
-                                                    {type === "bug" ? "Fixer" : type === "feature" ? "Lead" : "Assignee"}
+                                                    {type === "bug" ? "Fixer" : type === "feature" ? "Visionary" : "Assignee"}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        {/* Reporter / Creator */}
-                                        {(item.reporterDetails || item.addedByDetails) && (
+                                        {/* Optional Secondary User (e.g., Bug Reporter) */}
+                                        {type === "bug" && item.reporterDetails && (
                                             <>
                                                 <ArrowRight className="w-2.5 h-2.5 opacity-20" />
                                                 <div className="flex items-center gap-1.5 opacity-60">
                                                     <Avatar className="h-4 w-4 border border-primary/10 grayscale">
-                                                        <AvatarImage src={item.reporterDetails?.image || item.addedByDetails?.image} />
+                                                        <AvatarImage src={item.reporterDetails.image} />
                                                         <AvatarFallback className="text-[6px] font-bold">
-                                                            {(item.reporterDetails?.name || item.addedByDetails?.name)?.slice(0, 2).toUpperCase()}
+                                                            {item.reporterDetails.name?.slice(0, 2).toUpperCase()}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[8px] font-black">{item.reporterDetails?.name || item.addedByDetails?.name}</span>
+                                                        <span className="text-[8px] font-black">{item.reporterDetails.name}</span>
                                                         <span className="text-[6px] uppercase font-bold opacity-60 tracking-widest leading-none">
-                                                            {type === "bug" ? "Reporter" : "Visionary"}
+                                                            Reporter
                                                         </span>
                                                     </div>
                                                 </div>
@@ -233,12 +235,23 @@ const TaskSection = ({ title, type, icon: Icon, data, blobId }: { title: string,
                                         )}
                                     </div>
 
-                                    <div className="flex flex-col items-end opacity-40 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-1">Deadline</span>
-                                        <span className="text-[9px] font-bold">
-                                            {format(new Date(item.dueDate), "MMM d")}
-                                        </span>
-                                    </div>
+                                    {item.dueDate && (
+                                        <div className="flex flex-col items-end opacity-40 group-hover:opacity-100 transition-opacity">
+                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-1">Deadline</span>
+                                            <span className="text-[9px] font-bold">
+                                                {format(new Date(item.dueDate), "MMM d")}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {type === "feature" && !item.dueDate && (
+                                        <div className="flex flex-col items-end opacity-40">
+                                            <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-1">Created</span>
+                                            <span className="text-[9px] font-bold">
+                                                {format(new Date(item.createdAt || new Date()), "MMM d")}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
