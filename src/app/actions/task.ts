@@ -1,6 +1,7 @@
 "use server";
 
 import { connectToDatabase } from "@/lib/db";
+import clientPromise from "@/lib/db";
 import Task from "@/models/task";
 import Project from "@/models/project";
 import Explorer from "@/models/explorer";
@@ -8,7 +9,7 @@ import Bug from "@/models/bug";
 import Feature from "@/models/feature";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import clientPromise from "@/lib/db";
+import mongoose from "mongoose";
 
 export async function createTask(data: {
     name: string;
@@ -83,24 +84,45 @@ export async function getProjectMembers(projectId: string) {
     const project = await Project.findById(projectId).lean();
     if (!project) throw new Error("Project not found");
 
-    const userIds = project.members.map((m: any) => m.userId);
+    const memberDetails = project.members.map((m: any) => ({
+        userId: typeof m === "string" ? m : m.userId,
+        role: typeof m === "string" ? "member" : m.role
+    }));
+
+    const userIds = memberDetails.map(m => m.userId);
     const db = (await clientPromise).db();
 
     const users = await db.collection("user").find({
         $or: [
-            { id: { $in: userIds } },
             { _id: { $in: userIds } },
+            { id: { $in: userIds } },
             {
                 _id: {
                     $in: userIds.map((id: string) => {
-                        try { return new (require("mongodb").ObjectId)(id); } catch { return null; }
+                        try { return new mongoose.Types.ObjectId(id); } catch { return null; }
                     }).filter(Boolean)
                 }
             }
         ]
     }).toArray();
 
-    return JSON.parse(JSON.stringify(users));
+    const membersWithData = memberDetails.map(member => {
+        const userData = users.find(u =>
+            u._id.toString() === member.userId ||
+            u.id === member.userId ||
+            u._id === member.userId
+        );
+
+        return {
+            userId: member.userId,
+            role: member.role,
+            name: userData?.name || "Unknown User",
+            image: userData?.image || null,
+            email: userData?.email || null
+        };
+    });
+
+    return JSON.parse(JSON.stringify(membersWithData));
 }
 
 export async function getTasksByBlob(projectId: string, blobId: string) {
@@ -198,4 +220,339 @@ export async function getTasksByBlob(projectId: string, blobId: string) {
         ...categories,
         path
     }));
+}
+
+export async function getPaginatedTasks(params: {
+    projectId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    status?: string;
+    priority?: string;
+}) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) throw new Error("Unauthorized");
+    await connectToDatabase();
+
+    const { projectId, page, limit, search, status, priority } = params;
+    const skip = (page - 1) * limit;
+
+    const query: any = { projectId };
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+    if (search) {
+        query.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    const [tasks, total] = await Promise.all([
+        Task.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        Task.countDocuments(query)
+    ]);
+
+    // Hydrate users
+    const allUserIds = new Set([
+        ...tasks.map((t: any) => t.assignee),
+        ...tasks.map((t: any) => t.createdBy),
+    ].filter(Boolean));
+
+    const assigneeIds = Array.from(allUserIds);
+    const db = (await clientPromise).db();
+
+    const users = await db.collection("user").find({
+        $or: [
+            { id: { $in: assigneeIds } },
+            { _id: { $in: assigneeIds } },
+            {
+                _id: {
+                    $in: assigneeIds.map((id: string) => {
+                        try { return new (require("mongodb").ObjectId)(id); } catch { return null; }
+                    }).filter(Boolean)
+                }
+            }
+        ]
+    }).toArray();
+
+    const userMap = new Map();
+    users.forEach((u: any) => {
+        if (u.id) userMap.set(u.id, u);
+        if (u._id) userMap.set(u._id.toString(), u);
+    });
+
+    // Hydrate paths
+    const items = await Promise.all(tasks.map(async (task: any) => {
+        const path: string[] = [];
+        let current: any = await Explorer.findById(task.blobId).lean();
+        if (current) {
+            path.unshift(current.name);
+            while (current.parent) {
+                current = await Explorer.findById(current.parent).lean();
+                if (current) path.unshift(current.name);
+                else break;
+            }
+        }
+
+        return {
+            ...task,
+            filePath: path.join(" / "),
+            assigneeDetails: task.assignee ? {
+                name: userMap.get(task.assignee)?.name || "Unknown User",
+                image: userMap.get(task.assignee)?.image || ""
+            } : null,
+            creatorDetails: task.createdBy ? {
+                name: userMap.get(task.createdBy)?.name || "Unknown User",
+                image: userMap.get(task.createdBy)?.image || ""
+            } : null
+        };
+    }));
+
+    return JSON.parse(JSON.stringify({
+        items,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page
+    }));
+}
+
+export async function getPaginatedBugs(params: {
+    projectId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    status?: string;
+    priority?: string;
+}) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) throw new Error("Unauthorized");
+    await connectToDatabase();
+
+    const { projectId, page, limit, search, status, priority } = params;
+    const skip = (page - 1) * limit;
+
+    const query: any = { projectId };
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+    if (search) {
+        query.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    const [bugs, total] = await Promise.all([
+        Bug.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        Bug.countDocuments(query)
+    ]);
+
+    const allUserIds = new Set([
+        ...bugs.map((b: any) => b.reportedBy),
+        ...bugs.map((b: any) => b.fixedBy),
+    ].filter(Boolean));
+
+    const assigneeIds = Array.from(allUserIds);
+    const db = (await clientPromise).db();
+
+    const users = await db.collection("user").find({
+        $or: [
+            { id: { $in: assigneeIds } },
+            { _id: { $in: assigneeIds } },
+            {
+                _id: {
+                    $in: assigneeIds.map((id: string) => {
+                        try { return new (require("mongodb").ObjectId)(id); } catch { return null; }
+                    }).filter(Boolean)
+                }
+            }
+        ]
+    }).toArray();
+
+    const userMap = new Map();
+    users.forEach((u: any) => {
+        if (u.id) userMap.set(u.id, u);
+        if (u._id) userMap.set(u._id.toString(), u);
+    });
+
+    const items = await Promise.all(bugs.map(async (bug: any) => {
+        const path: string[] = [];
+        let current: any = await Explorer.findById(bug.blobId).lean();
+        if (current) {
+            path.unshift(current.name);
+            while (current.parent) {
+                current = await Explorer.findById(current.parent).lean();
+                if (current) path.unshift(current.name);
+                else break;
+            }
+        }
+
+        return {
+            ...bug,
+            filePath: path.join(" / "),
+            assigneeDetails: bug.fixedBy ? {
+                name: userMap.get(bug.fixedBy)?.name || "Unknown User",
+                image: userMap.get(bug.fixedBy)?.image || ""
+            } : null,
+            reporterDetails: bug.reportedBy ? {
+                name: userMap.get(bug.reportedBy)?.name || "Unknown User",
+                image: userMap.get(bug.reportedBy)?.image || ""
+            } : null
+        };
+    }));
+
+    return JSON.parse(JSON.stringify({
+        items,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page
+    }));
+}
+
+export async function getPaginatedFeatures(params: {
+    projectId: string;
+    page: number;
+    limit: number;
+    search?: string;
+}) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session) throw new Error("Unauthorized");
+    await connectToDatabase();
+
+    const { projectId, page, limit, search } = params;
+    const skip = (page - 1) * limit;
+
+    const query: any = { projectId };
+    if (search) {
+        query.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } }
+        ];
+    }
+
+    const [features, total] = await Promise.all([
+        Feature.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        Feature.countDocuments(query)
+    ]);
+
+    const allUserIds = new Set([
+        ...features.map((f: any) => f.addedBy),
+    ].filter(Boolean));
+
+    const assigneeIds = Array.from(allUserIds);
+    const db = (await clientPromise).db();
+
+    const users = await db.collection("user").find({
+        $or: [
+            { id: { $in: assigneeIds } },
+            { _id: { $in: assigneeIds } },
+            {
+                _id: {
+                    $in: assigneeIds.map((id: string) => {
+                        try { return new (require("mongodb").ObjectId)(id); } catch { return null; }
+                    }).filter(Boolean)
+                }
+            }
+        ]
+    }).toArray();
+
+    const userMap = new Map();
+    users.forEach((u: any) => {
+        if (u.id) userMap.set(u.id, u);
+        if (u._id) userMap.set(u._id.toString(), u);
+    });
+
+    const items = await Promise.all(features.map(async (feature: any) => {
+        const path: string[] = [];
+        let current: any = await Explorer.findById(feature.blobId).lean();
+        if (current) {
+            path.unshift(current.name);
+            while (current.parent) {
+                current = await Explorer.findById(current.parent).lean();
+                if (current) path.unshift(current.name);
+                else break;
+            }
+        }
+
+        return {
+            ...feature,
+            filePath: path.join(" / "),
+            addedByDetails: feature.addedBy ? {
+                name: userMap.get(feature.addedBy)?.name || "Unknown User",
+                image: userMap.get(feature.addedBy)?.image || ""
+            } : null
+        };
+    }));
+
+    return JSON.parse(JSON.stringify({
+        items,
+        total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page
+    }));
+}
+
+export async function updateWorkItem(params: {
+    id: string;
+    type: "task" | "bug" | "feature";
+    data: any;
+}) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) throw new Error("Unauthorized");
+    await connectToDatabase();
+
+    const { id, type, data } = params;
+    const Model = type === "task" ? Task : type === "bug" ? Bug : Feature;
+
+    // Check ownership
+    const item = await Model.findById(id).lean();
+    if (!item) throw new Error("Item not found");
+
+    const ownerId = (item as any).createdBy || (item as any).reportedBy || (item as any).addedBy;
+    if (ownerId !== session.user.id) throw new Error("Only the creator can edit this item");
+
+    const updated = await Model.findByIdAndUpdate(id, data, { new: true });
+    return JSON.parse(JSON.stringify(updated));
+}
+
+export async function deleteWorkItem(params: {
+    id: string;
+    type: "task" | "bug" | "feature";
+}) {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) throw new Error("Unauthorized");
+    await connectToDatabase();
+
+    const { id, type } = params;
+    const Model = type === "task" ? Task : type === "bug" ? Bug : Feature;
+
+    // Check ownership
+    const item = await Model.findById(id).lean();
+    if (!item) throw new Error("Item not found");
+
+    const ownerId = (item as any).createdBy || (item as any).reportedBy || (item as any).addedBy;
+    if (ownerId !== session.user.id) throw new Error("Only the creator can delete this item");
+
+    await Model.findByIdAndDelete(id);
+    return { success: true };
 }

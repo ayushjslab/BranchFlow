@@ -6,6 +6,8 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/db";
 import Task from "@/models/task";
+import clientPromise from "@/lib/db";
+import mongoose from "mongoose";
 
 export async function createProject(formData: { name: string; description?: string }) {
     await connectToDatabase();
@@ -138,3 +140,5 @@ export async function removeMember(projectId: string, userId: string) {
     revalidatePath(`/members/manage`);
     return { success: true };
 }
+
+

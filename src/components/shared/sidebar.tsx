@@ -15,9 +15,7 @@ import {
     HiOutlineX,
     HiOutlineAdjustments,
     HiOutlineCog,
-    HiOutlinePlusCircle,
     HiOutlineBriefcase,
-    HiOutlineClipboardCheck,
     HiOutlineCalendar,
 } from "react-icons/hi";
 import { Button } from "@/components/ui/button";
