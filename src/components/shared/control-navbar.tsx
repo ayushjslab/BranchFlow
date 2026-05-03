@@ -27,9 +27,10 @@ import { useRouter } from "next/navigation";
 
 interface ControlNavbarProps {
     onMenuClick: () => void;
+    isSidebarHidden?: boolean;
 }
 
-export const ControlNavbar = ({ onMenuClick }: ControlNavbarProps) => {
+export const ControlNavbar = ({ onMenuClick, isSidebarHidden = false }: ControlNavbarProps) => {
     const router = useRouter();
     const { selectedProject, setSelectedProject, reset: resetProjectStore } = useProjectStore();
     const { data: session } = authClient.useSession();
@@ -54,7 +55,10 @@ export const ControlNavbar = ({ onMenuClick }: ControlNavbarProps) => {
                         size="icon"
                         onClick={onMenuClick}
                         title="Open Menu"
-                        className="lg:hidden h-10 w-10 text-muted-foreground"
+                        className={cn(
+                            "h-10 w-10 text-muted-foreground",
+                            isSidebarHidden ? "flex" : "lg:hidden"
+                        )}
                     >
                         <HiOutlineMenuAlt2 className="h-6 w-6" />
                     </Button>

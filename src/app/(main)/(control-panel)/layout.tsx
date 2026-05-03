@@ -13,6 +13,7 @@ const ControlPanelLayout = ({ children }: { children: React.ReactNode }) => {
     const { data: session, isPending } = authClient.useSession();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isSidebarHidden, setIsSidebarHidden] = useState(false);
 
     useEffect(() => {
         if (!isPending && !session) {
@@ -39,10 +40,15 @@ const ControlPanelLayout = ({ children }: { children: React.ReactNode }) => {
                 setIsOpen={setIsSidebarOpen}
                 isCollapsed={isSidebarCollapsed}
                 setIsCollapsed={setIsSidebarCollapsed}
+                isHidden={isSidebarHidden}
+                setIsHidden={setIsSidebarHidden}
             />
 
             <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-                <ControlNavbar onMenuClick={() => setIsSidebarOpen(true)} />
+                <ControlNavbar
+                    onMenuClick={() => setIsSidebarOpen(true)}
+                    isSidebarHidden={isSidebarHidden}
+                />
 
                 <main className="flex-1 overflow-hidden flex flex-col">
                     <div className={cn(

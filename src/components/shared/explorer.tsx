@@ -25,9 +25,9 @@ import {
     Sparkles,
     Edit2
 } from "lucide-react";
-import { CreateTaskDialog } from "./create-task-dialog";
-import { CreateBugDialog } from "./create-bug-dialog";
-import { CreateFeatureDialog } from "./create-feature-dialog";
+import { CreateTaskDialog } from "./create-task-drawer";
+import { CreateBugDialog } from "./create-bug-drawer";
+import { CreateFeatureDialog } from "./create-feature-drawer";
 import { useProjectStore } from "@/store/useProjectStore";
 import { authClient } from "@/lib/auth-client";
 import { getProjectMembers } from "@/app/actions/task";
